@@ -1,0 +1,4 @@
+name: "dlookrExtra paginated html report"
+description: >
+   Create a paged HTML paginated report with dlookrExtra
+create_dir: FALSE
