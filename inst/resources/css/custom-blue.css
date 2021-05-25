@@ -12,8 +12,10 @@
   --custom-grey10: rgb(230, 230, 230);
   --custom-blue: rgb(0, 114, 188);
   --custom-lightblue: rgb(204, 227, 242);
-  --custom-orange: rgb(255, 127, 42); /* add */
-  --custom-lightorange: rgb(255, 204, 170); /* add */
+  --custom-blue-front: rgba(255, 255, 255, 0.9);
+  --custom-orange: rgb(255, 127, 42); 
+  --custom-lightorange: rgb(255, 204, 170); 
+  --custom-orange-front: rgba(255, 230, 213, 0.9);
   --custom-yellow: rgb(250, 235, 0);
   --cover-title-width: 50%;
 }
@@ -29,7 +31,7 @@ h6, h5, h4, h3, h2, h1 {
 }
 
 h2, h1 {
-  color: var(--custom-orange);
+  color: var(--custom-blue);
 }
 
 h3, h5 {
@@ -122,7 +124,7 @@ blockquote>:first-child {
   font-style: italic;
   margin-bottom: 0;
   /*color: var(--custom-blue); */
-  color: var(--custom-orange);
+  color: var(--custom-blue);
   quotes: "“" "”" "‘" "’";
 }
 
@@ -186,7 +188,8 @@ sup {
 }
 
 a {
-  color: var(--custom-blue);
+  /*color: var(--custom-blue); */
+  color: var(--custom-blue);  
   text-decoration: underline;
 }
 
@@ -320,7 +323,7 @@ th {
   font-weight: 700;
 }
 .table > :not(:last-child) > :last-child > * {
-  border-bottom-color: var(--custom-orange);
+  border-bottom-color: var(--custom-blue);
 }
 .table-bordered > :not(caption) > * {
   border-width: 1px 0;
@@ -398,8 +401,7 @@ th {
   width: 100%;
   margin: 0;
   padding: 15mm;
-  /*background-color: rgba(255, 255, 255, 0.9); */
-  background-color: rgba(255, 230, 213, 0.9);
+  background-color: var(--custom-blue-front);
   font-family: 'Lato', Arial, sans-serif;
   font-size: 1.25em;
   color: --custom-font-color;
@@ -409,7 +411,7 @@ th {
 
 .front-page h3.abstract {
    text-align: left;
-   color: var(--custom-orange);
+   color: var(--custom-blue);
    font-size: 2em;
    font-weight: 400;
  }
@@ -581,7 +583,7 @@ pre.numberSource {
   margin-top: 0.33em;
 }
 .footnote sup {
-  color: var(--custom-orange);
+  color: var(--custom-blue);
   font-weight: 700;
 }
 .footnote-ref {

@@ -3,3 +3,7 @@
 .RData
 .Ruserdata
 .DS_Store
+custom-fonts_2.css
+fonts
+*.pdf
+*.woff2

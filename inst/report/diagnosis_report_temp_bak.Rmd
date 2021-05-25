@@ -5,7 +5,7 @@ abstract-title: "$abstract_title$"
 abstract: "$abstract$"
 date: "`r Sys.Date()`"
 output: 
-  dlookrExtra::dlookrExtra_$theme$_paged: 
+  dlookrExtra::dlookrExtra_templ_paged: 
     # Change to point to your cover file
     front_cover: cover.jpg
     toc: true
@@ -35,14 +35,17 @@ reportData <- get("reportData", .dlookrExtraEnv)
 
 
 ```{css, echo=FALSE}
-.pagedjs_page.pagedjs_first_page .pagedjs_margin-top-right>.pagedjs_margin-content::after {
-    content: url("$logo$");
+.pagedjs_page:last-of-type {
+  background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iODAwIiB3aWR0aD0iMTIwMCIgcHJlc2VydmVBc3BlY3RSYXRpbz0ieE1pZFlNaWQiIHZpZXdCb3g9Ii0xMDguMTY0MSAtMTM5LjAxNTUgOTM3LjQyMjIgODM0LjA5MyI+PGRlZnM+PGxpbmVhckdyYWRpZW50IGdyYWRpZW50VHJhbnNmb3JtPSJtYXRyaXgoMS4yMjE5NCAwIDAgLjgxODM3IC0uOTA2IC0zKSIgc3ByZWFkTWV0aG9kPSJwYWQiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIiB5Mj0iNTkzLjc4NyIgeTE9IjMuNjY2IiB4Mj0iNTkwLjg2MyIgeDE9Ii43NDEiIGlkPSJhIj48c3RvcCBzdG9wLWNvbG9yPSIjQ0JDRUQwIiBvZmZzZXQ9IjAiLz48c3RvcCBzdG9wLWNvbG9yPSIjODQ4MzhCIiBvZmZzZXQ9IjEiLz48L2xpbmVhckdyYWRpZW50PjxsaW5lYXJHcmFkaWVudCBncmFkaWVudFRyYW5zZm9ybT0ibWF0cml4KC45ODk5NSAwIDAgMS4wMTAxNSAtLjkwNiAtMykiIHNwcmVhZE1ldGhvZD0icGFkIiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSIgeTI9IjU1My40NDIiIHkxPSIxNTEuNDAxIiB4Mj0iNzAzLjA2OCIgeDE9IjMwMS4wMjYiIGlkPSJiIj48c3RvcCBzdG9wLWNvbG9yPSIjMjc2REMzIiBvZmZzZXQ9IjAiLz48c3RvcCBzdG9wLWNvbG9yPSIjMTY1Q0FBIiBvZmZzZXQ9IjEiLz48L2xpbmVhckdyYWRpZW50PjwvZGVmcz48cGF0aCBmaWxsLXJ1bGU9ImV2ZW5vZGQiIGZpbGw9InVybCgjYSkiIGQ9Ik0zNjAuNTQ3IDQ4Mi45MzdDMTYxLjQyMyA0ODIuOTM3IDAgMzc0LjgyOCAwIDI0MS40NjkgMCAxMDguMTA5IDE2MS40MjMgMCAzNjAuNTQ3IDBjMTk5LjEyNSAwIDM2MC41NDcgMTA4LjEwOSAzNjAuNTQ3IDI0MS40NjkgMCAxMzMuMzU5LTE2MS40MjIgMjQxLjQ2OC0zNjAuNTQ3IDI0MS40Njh6bTU1LjE4OC0zODguNTMxYy0xNTEuMzUyIDAtMjc0LjA0NyA3My45MDgtMjc0LjA0NyAxNjUuMDc4czEyMi42OTUgMTY1LjA3OCAyNzQuMDQ3IDE2NS4wNzhjMTUxLjM1MSAwIDI2My4wNDYtNTAuNTI5IDI2My4wNDYtMTY1LjA3OCAwLTExNC41MTMtMTExLjY5NS0xNjUuMDc4LTI2My4wNDYtMTY1LjA3OHoiLz48cGF0aCBmaWxsLXJ1bGU9ImV2ZW5vZGQiIGZpbGw9InVybCgjYikiIGQ9Ik01NDkuMDk0IDM3NHMyMS44MjIgNi41ODUgMzQuNSAxM2M0LjM5OSAyLjIyNiAxMi4wMSA2LjY2OCAxNy41IDEyLjUgNS4zNzggNS43MTIgOCAxMS41IDggMTEuNWw4NiAxNDUtMTM5IC4wNjItNjUtMTIyLjA2MnMtMTMuMzEtMjIuODY5LTIxLjUtMjkuNWMtNi44MzItNS41MzEtOS43NDUtNy41LTE2LjUtNy41aC0zMy4wMjZsLjAyNiAxNTguOTc0LTEyMyAuMDUyVjE0OS45MzhoMjQ3czExMi41IDIuMDI5IDExMi41IDEwOS4wNjItMTA3LjUgMTE1LTEwNy41IDExNXptLTUzLjUtMTM1Ljk3NmwtNzQuNDYzLS4wNDgtLjAzNyA2OS4wNSA3NC41LS4wMjRzMzQuNS0uMTA3IDM0LjUtMzUuMTI1YzAtMzUuNzIyLTM0LjUtMzMuODUzLTM0LjUtMzMuODUzeiIvPjwvc3ZnPg==");
+  background-position: 10mm 30mm;
+  background-size: 190mm 257mm;
+  background-repeat: no-repeat;
 }
 ```
 
-# Data Diagnosis
-
-## Overview
+# Diagnose Data
+## Overview of Diagnosis
+### List of all variables quality
 
 ```{r overview, echo=FALSE, warning=FALSE, message=FALSE, results='asis'}
 N <- NROW(reportData)
@@ -59,8 +62,7 @@ print_tab(diagn_overview, caption = cap, n_rows = 20)
 ```
 
 
-## Missing Value
-### Overview
+### Diagnosis of missing data
 ```{r missing-data, echo=FALSE, warning=FALSE, message=FALSE, results='asis'}
 diagn_missing <- diagn_overview %>%
   filter(`missing value(n)` > 0) %>%
@@ -77,60 +79,47 @@ if (NROW(diagn_missing) > 0) {
 }
 ```
 
-### Visualization
-```{r missing-viz, dpi=300, echo=FALSE, warning=FALSE, message=FALSE, fig.height=8, fig.width=8, results='asis'}
-if (NROW(diagn_missing) > 0) {
-  plot_na_pareto(reportData, only_na = TRUE) +
-    theme(axis.text.x = element_text(angle = 30, hjust = 1))
-} else {
-  cat("No variables including missing values")
-}
-break_page_asis()
-```
 
-## Unique Value
 
-### Categrical Vaiables 
+### Diagnosis of unique data(Text and Category)
 ```{r unique-date-category, echo=FALSE, warning=FALSE, message=FALSE, results='asis'}
-thres <- 0.5
-  
 diagn_uniq_cat <- diagn_overview %>%
   filter(type %in% c("character", "factor", "ordered")) %>%
-  filter(`unique value(n/N)` >= thres) %>%
+  filter(`unique value(n/N)` >= 0.5) %>%
   arrange(desc(`unique value(n/N)`))
 
 if (NROW(diagn_uniq_cat) > 0) {
-  cap <- paste("Variables where the proportion of unique data is more than", thres)
+  cap <- "Variables where the proportion of unique data is more than 0.5"
   
   print_tab(diagn_uniq_cat, caption = cap, n_rows = 25)
 } else {
-  cat(paste("No variable with a high proportion greater than", thres))
+  cat("No variable with a high proportion greater than 0.5")
   break_page_asis()
 }
 ```
 
-### Numerical Variables
+
+### Diagnosis of unique data(Numerical)
 ```{r unique-data-numeric, echo=FALSE, warning=FALSE, message=FALSE, results='asis'}
-thres <- 0.1
-  
 diagn_uniq_num <- diagn_overview %>%
   filter(type %in% c("numeric", "integer")) %>%
-  filter(`unique value(n/N)` <= thres) %>%
+  filter(`unique value(n/N)` <= 0.1) %>%
   arrange(desc(`unique value(n/N)`))
 
 if (NROW(diagn_uniq_num) > 0) {
-  cap <- paste("Variables where the proportion of unique data is less than", thres)
+  cap <- "Variables where the proportion of unique data is less than 0.1"
   
   print_tab(diagn_uniq_num, caption = cap, n_rows = 25)
 } else {
-  cat(paste("No variable with unique data proportion less than", thres))
+  cat("No variable with unique data proportion less than 0.1")
   break_page_asis()  
 }
 ```
 
 
-# Categorical Variable Diagnosis
-## Top Ranks
+## Detailed data diagnosis
+
+### Diagnosis of categorical variables
 ```{r diagnose-catagory, echo=FALSE, warning=FALSE, message=FALSE, comment="", results='asis'}
 diagn_category <- diagnose_category(reportData, top = 10, type = "n")
 
@@ -146,8 +135,8 @@ if (NROW(diagn_category) > 0) {
 }
 ```
 
-# Numerical Variable Diagnosis
-## Distributions
+
+### Diagnosis of numerical variables
 ```{r diagnose-numeric, echo=FALSE, warning=FALSE, message=FALSE, results='asis'}
 diagn_numeric <- diagnose_numeric(reportData)
 
@@ -161,8 +150,8 @@ if (NROW(diagn_numeric) > 0) {
 }
 ```
 
-$content_zero$
-### Zero Values
+
+### List of numerical diagnosis (zero)
 ```{r numeric-zero, echo=FALSE, warning=FALSE, message=FALSE, results='asis'}
 if (NROW(diagn_numeric) > 0) {
   diagn_zero <- diagn_numeric %>%
@@ -184,10 +173,9 @@ if (NROW(diagn_numeric) > 0) {
   break_page_asis()    
 }
 ```
-$content_zero$
 
-$content_minus$
-### Minus Values
+
+### List of numerical diagnosis (minus)
 ```{r numeric-minus, echo=FALSE, warning=FALSE, message=FALSE, results='asis'}
 if (NROW(diagn_numeric) > 0) {
   diagn_minus <- diagn_numeric %>%
@@ -209,10 +197,11 @@ if (NROW(diagn_numeric) > 0) {
   break_page_asis()     
 }
 ```
-$content_minus$
 
-## Outliers
-### Overview
+
+# Diagnose Outliers
+## Overview of Diagnosis
+### Diagnosis of numerical variable outliers
 
 ```{r outliers, echo=FALSE, warning=FALSE, message=FALSE, results='asis'}
 if (NROW(diagn_numeric) > 0) {
@@ -236,7 +225,8 @@ if (NROW(diagn_numeric) > 0) {
 }
 ```
 
-### Individual Outliers
+
+## Detailed outliers diagnosis
 ```{r detail-outliers, echo=FALSE, warning=FALSE, message=FALSE, comment="", fig.height=4, fig.width=6, results='asis'}
 if (NROW(diagn_numeric) > 0) {
   diagn_outlier2 <- reportData %>%

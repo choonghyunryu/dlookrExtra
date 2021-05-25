@@ -40,7 +40,8 @@ print_tab <- function(tab, n_rows = 25, caption = "", full_width = TRUE,
       pmin(nrow(tab)) %>% 
       unique()
     
-    knitr::kable(tab[idx, ], digits = 2, caption = caption, format = "html",
+    knitr::kable(tab[idx, ], digits = 2, format = "html",
+                 caption = ifelse(i > 1, paste(caption, "(continued)"), caption), 
                  format.args = list(big.mark = ",")) %>%
       kableExtra::kable_styling(full_width = full_width, font_size = font_size, 
                                 position = "left") %>% 
