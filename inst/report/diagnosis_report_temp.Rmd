@@ -7,7 +7,7 @@ date: "`r Sys.Date()`"
 output: 
   dlookrExtra::dlookrExtra_$theme$_paged: 
     # Change to point to your cover file
-    front_cover: cover.jpg
+    front_cover: $cover$
     toc: true
     # Change to true to add number in front of chapters
     number_sections: false
@@ -38,11 +38,22 @@ reportData <- get("reportData", .dlookrExtraEnv)
 .pagedjs_page.pagedjs_first_page .pagedjs_margin-top-right>.pagedjs_margin-content::after {
     content: url("$logo$");
 }
+
+.title {
+  color: $title_color$;
+}
+
+.subtitle {
+  color: $subtitle_color$;
+}
 ```
 
 # Data Diagnosis
 
 ## Overview
+
+* `r nrow(reportData) %>% format(big.mark = ",")` Observations and `r ncol(reportData)` Variables.
+* `r sum(complete.cases(reportData)) %>% format(big.mark = ",")` (`r (sum(complete.cases(reportData)) / nrow(reportData) * 100) %>% round(2)`%) Complete Cases.
 
 ```{r overview, echo=FALSE, warning=FALSE, message=FALSE, results='asis'}
 N <- NROW(reportData)
@@ -60,7 +71,7 @@ print_tab(diagn_overview, caption = cap, n_rows = 20)
 
 
 ## Missing Value
-### Overview
+### List of Missing Values
 ```{r missing-data, echo=FALSE, warning=FALSE, message=FALSE, results='asis'}
 diagn_missing <- diagn_overview %>%
   filter(`missing value(n)` > 0) %>%
@@ -88,9 +99,9 @@ if (NROW(diagn_missing) > 0) {
 break_page_asis()
 ```
 
-## Unique Value
+## Unique Values
 
-### Categrical Vaiables 
+### Categorical Vaiables 
 ```{r unique-date-category, echo=FALSE, warning=FALSE, message=FALSE, results='asis'}
 thres <- 0.5
   
@@ -212,7 +223,7 @@ if (NROW(diagn_numeric) > 0) {
 $content_minus$
 
 ## Outliers
-### Overview
+### List of Outliers
 
 ```{r outliers, echo=FALSE, warning=FALSE, message=FALSE, results='asis'}
 if (NROW(diagn_numeric) > 0) {
