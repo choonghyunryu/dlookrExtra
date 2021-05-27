@@ -68,6 +68,8 @@
 #' Categorical Variables". default is 0.5.
 #' @param thres_uniq_num numeric. threshold to use for "Unique Values - 
 #' Numerical Variables". default is 0.1.
+#' @param flag_content_missing logical. whether to output "Missing Value" information. 
+#' the default value is TRUE, and the information is displayed.
 #' @param flag_content_zero logical. whether to output "Zero Values" information. 
 #' the default value is TRUE, and the information is displayed.
 #' @param flag_content_minus logical. whether to output "Minus Values" information. 
@@ -80,14 +82,18 @@
 #'
 #' @examples
 #' \dontrun{
-#' # reporting the diagnosis information -------------------------
 #' # create pdf file. file name is DataDiagnosis_Report.pdf
 #' diagnose_paged(heartfailure)
-#' # create pdf file. file name is Diagn.pdf
-#' diagnose_paged(heartfailure, output_file = "Diagn.pdf")
+#' 
+#' # create pdf file. file name is Diagn.pdf. and change cover image
+#' # cover <- file.path(system.file(package = "dlookrExtra"), "report", "cover2.jpg")
+#' # diagnose_paged(heartfailure, cover_img = cover, title_color = "gray",
+#'     output_file = "Diagn.pdf")
+#'
 #' # create pdf file. file name is ./Diagn.pdf and not browse
-#' # diagnose_paged(heartfailure, output_dir = ".", output_file = "Diagn.pdf", 
-#' #   browse = FALSE)
+#' # cover <- file.path(system.file(package = "dlookrExtra"), "report", "cover3.jpg")
+#' # diagnose_paged(heartfailure, output_dir = ".", cover_img = cover, 
+#' #    flag_content_missing = FALSE, output_file = "Diagn.pdf", browse = FALSE)
 #' }
 #' 
 #' @importFrom rmarkdown render
@@ -102,7 +108,8 @@ diagnose_paged <- function(.data, output_format = c("html", "pdf"),
                            title_color = "white", subtitle_color = "gold",
                            thres_uniq_cat = 0.5, thres_uniq_num = 0.1,
                            flag_content_zero = TRUE, flag_content_minus = TRUE,
-                           cover_img = NULL, logo_img = NULL, theme = "orange", ...) {
+                           flag_content_missing = TRUE, cover_img = NULL, 
+                           logo_img = NULL, theme = "orange", ...) {
   output_format <- match.arg(output_format)
   
   assign("reportData", as.data.frame(.data), .dlookrExtraEnv)
@@ -121,14 +128,6 @@ diagnose_paged <- function(.data, output_format = c("html", "pdf"),
   # copy markdown
   rmd_file <- file.path(system.file(package = "dlookrExtra"), "report", rmd)
   flag <- file.copy(from = rmd_file, to = path, recursive = TRUE)
-  
-  # copy cover image
-  # cover_file <- file.path(system.file(package = "dlookrExtra"), "report", cover)
-  # flag <- file.copy(from = cover_file, to = path, recursive = TRUE)
-  
-  # copy logo image
-  #logo_file <- file.path(system.file(package = "dlookrExtra"), "report", logo)
-  #flag <- file.copy(from = logo_file, to = path, recursive = TRUE)  
   
   #--Store parameters ----------------------------------------------------------  
   # store theme
@@ -202,6 +201,19 @@ diagnose_paged <- function(.data, output_format = c("html", "pdf"),
   cat(rmd_content, file = paste(path, rmd, sep = "/"), sep = "\n")     
   
   #--Set contents  -------------------------------------------------------------  
+  # missing value contents
+  if (flag_content_missing) {
+    rmd_content <- gsub("\\$content_missing\\$", "", 
+                        readLines(paste(path, rmd, sep = "/")))
+    cat(rmd_content, file = paste(path, rmd, sep = "/"), sep = "\n")     
+  } else {
+    txt <- readLines(paste(path, rmd, sep = "/")) %>% 
+      paste(collapse = "\n") 
+    
+    sub("\\$content_missing\\$[[:print:][:space:]]+\\$content_missing\\$", "", txt) %>% 
+      cat(file = paste(path, rmd, sep = "/"))   
+  }
+  
   # zero contents
   if (flag_content_zero) {
     rmd_content <- gsub("\\$content_zero\\$", "", 

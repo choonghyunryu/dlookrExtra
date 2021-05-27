@@ -20,6 +20,7 @@ diagnose_paged(
   thres_uniq_num = 0.1,
   flag_content_zero = TRUE,
   flag_content_minus = TRUE,
+  flag_content_missing = TRUE,
   cover_img = NULL,
   logo_img = NULL,
   theme = "orange",
@@ -63,6 +64,9 @@ Numerical Variables". default is 0.1.}
 the default value is TRUE, and the information is displayed.}
 
 \item{flag_content_minus}{logical. whether to output "Minus Values" information. 
+the default value is TRUE, and the information is displayed.}
+
+\item{flag_content_missing}{logical. whether to output "Missing Value" information. 
 the default value is TRUE, and the information is displayed.}
 
 \item{cover_img}{character. name of cover image.}
@@ -128,14 +132,18 @@ Reported from the data diagnosis is as follows.
 
 \examples{
 \dontrun{
-# reporting the diagnosis information -------------------------
 # create pdf file. file name is DataDiagnosis_Report.pdf
 diagnose_paged(heartfailure)
-# create pdf file. file name is Diagn.pdf
-diagnose_paged(heartfailure, output_file = "Diagn.pdf")
+
+# create pdf file. file name is Diagn.pdf. and change cover image
+# cover <- file.path(system.file(package = "dlookrExtra"), "report", "cover2.jpg")
+# diagnose_paged(heartfailure, cover_img = cover, title_color = "gray",
+    output_file = "Diagn.pdf")
+
 # create pdf file. file name is ./Diagn.pdf and not browse
-# diagnose_paged(heartfailure, output_dir = ".", output_file = "Diagn.pdf", 
-#   browse = FALSE)
+# cover <- file.path(system.file(package = "dlookrExtra"), "report", "cover3.jpg")
+# diagnose_paged(heartfailure, output_dir = ".", cover_img = cover, 
+#    flag_content_missing = FALSE, output_file = "Diagn.pdf", browse = FALSE)
 }
 
 }
