@@ -1,7 +1,197 @@
+#' Reporting the information of data diagnosis with html
+#'
+#' @description The diagnose_report() report the information for diagnosing
+#' the quality of the data.
+#'
+#' @details Generate generalized data diagnostic reports automatically.
+#' You can choose to output to pdf and html files.
+#' This is useful for diagnosing a data frame with a large number of variables
+#' than data with a small number of variables.
+#' 
+#' The title and subtitle colors should be designated by the color name used in 
+#' CSS of html, not the color defined in R. 
+#' 
+#' @section Reported information:
+#' Reported from the data diagnosis is as follows.
+#'
+#' \itemize{
+#'   \item Data Diagnosis
+#'   \itemize{
+#'     \item Overview 
+#'     \item Missing Values
+#'     \itemize{
+#'       \item List of Missing Values
+#'       \item Visualization
+#'     }
+#'     \item Unique Values
+#'     \itemize{
+#'       \item Categorical Variables
+#'       \item Numerical Variables
+#'     }
+#'   }
+#'   \item Categorical Variable Diagnosis
+#'   \itemize{
+#'     \item Top Ranks
+#'   }   
+#'   \item Numerical Variable Diagnosis
+#'   \itemize{
+#'     \item Distribution
+#'     \itemize{
+#'       \item Zero Values
+#'       \item Minus Values
+#'     }
+#'     \item Outliers
+#'     \itemize{
+#'       \item List of Outliers
+#'       \item Individual Outliers
+#'     }
+#'   }
+#' }
+#'
+#' @param .data a data.frame or a \code{\link{tbl_df}}.
+#' @param output_file name of generated file. default is NULL.
+#' @param output_dir name of directory to generate report file. default is tempdir().
+#' @param browse logical. choose whether to output the report results to the browser.
+#' @param title character. title of report. default is "Data Diagnosis Report".
+#' @param subtitle character. subtitle of report. default is name of data.
+#' @param author character. author of report. default is "".
+#' @param title_color character. color of title. default is "white".
+#' @param thres_uniq_cat numeric. threshold to use for "Unique Values - 
+#' Categorical Variables". default is 0.5.
+#' @param thres_uniq_num numeric. threshold to use for "Unique Values - 
+#' Numerical Variables". default is 0.1.
+#' @param logo_img character. name of logo image on top right.
+#' @param theme character. name of theme for report. support "orange" and "blue". 
+#' default is "orange".
+#' @param ... arguments to be passed to methods.
+#'
+#' @examples
+#' \dontrun{
+#' # create pdf file. file name is Diagnosis_Paged_Report.pdf
+#' diagnose_report(heartfailure)
+#' 
+#' # file name is Diagn.html. and change logo image
+#' # logo <- file.path(system.file(package = "dlookrExtra"), "report", "R_logo_html.svg")
+#' # diagnose_report(heartfailure, logo_img = logo, title_color = "black",
+#'     output_file = "Diagn.html")
+#'
+#' # file name is ./Diagn_heartfailure.html, "blue" theme and not browse
+#' # diagnose_report(heartfailure, output_dir = ".", author = "Choonghyun Ryu",
+#' #    output_file = "Diagn_heartfailure.html", theme = "blue", browse = FALSE)
+#' }
+#' 
+#' @importFrom rmarkdown render
+#' @importFrom knitr image_uri
+#' @export
+diagnose_report <- function(.data, output_file = NULL, output_dir = tempdir(),   
+                            browse = TRUE, title = "Data Diagnosis",
+                            subtitle = deparse(substitute(.data)), author = "",
+                            title_color = "gray", thres_uniq_cat = 0.5, 
+                            thres_uniq_num = 0.1, logo_img = NULL, 
+                            create_date = format(Sys.Date(),  '%d %B %Y'),
+                            theme = c("orange", "blue")[1], ...) {
+  assign("reportData", as.data.frame(.data), .dlookrExtraEnv)
+  
+  path <- output_dir
+  
+  rmd   <- "diagnosis_temp.Rmd"
+  header <- "header_temp.html"
+  logo  <- "dlookr_html.svg"  
+  
+  if (is.null(output_file))
+    output_file <- "Diagnosis_Paged_Report.html"
+  output_file <- paste(path, output_file, sep = "/")
+  
+  #--Copy files ----------------------------------------------------------------
+  # copy markdown
+  rmd_file <- file.path(system.file(package = "dlookrExtra"), "report", rmd)
+  flag <- file.copy(from = rmd_file, to = path, recursive = TRUE)
+  
+  # copy header  
+  header_file <- file.path(system.file(package = "dlookrExtra"), "report", header)
+  flag <- file.copy(from = header_file, to = path, recursive = TRUE)  
+  
+  #--Store parameters ----------------------------------------------------------  
+  # store theme
+  if (theme == "orange") {
+    rmd_content <- gsub("\\$navbar\\$", "var(--custom-lightorange)", 
+                        readLines(paste(path, rmd, sep = "/")))
+    cat(rmd_content, file = paste(path, rmd, sep = "/"), sep = "\n")
+    
+    rmd_content <- gsub("\\$listgitem\\$", "var(--custom-orange)", 
+                        readLines(paste(path, rmd, sep = "/")))
+    cat(rmd_content, file = paste(path, rmd, sep = "/"), sep = "\n")    
+  } else if (theme == "blue") {
+    rmd_content <- gsub("\\$navbar\\$", "var(--custom-lightblue)", 
+                        readLines(paste(path, rmd, sep = "/")))
+    cat(rmd_content, file = paste(path, rmd, sep = "/"), sep = "\n")
+    
+    rmd_content <- gsub("\\$listgitem\\$", "var(--custom-blue)", 
+                        readLines(paste(path, rmd, sep = "/")))
+    cat(rmd_content, file = paste(path, rmd, sep = "/"), sep = "\n")        
+  }  
+
+  # store title
+  header_content <- sub("\\$title\\$", title, readLines(paste(path, header, sep = "/")))
+  cat(header_content, file = paste(path, header, sep = "/"), sep = "\n")
+  
+  # store subtitle
+  header_content <- sub("\\$subtitle\\$", subtitle, readLines(paste(path, header, sep = "/")))
+  cat(header_content, file = paste(path, header, sep = "/"), sep = "\n")
+  
+  # store title color
+  rmd_content <- sub("\\$title_color\\$", title_color, readLines(paste(path, rmd, sep = "/")))
+  cat(rmd_content, file = paste(path, rmd, sep = "/"), sep = "\n")
+  
+  # store author
+  if (author != "") {
+    author <- paste("Creat by :", author)
+  }
+  header_content <- sub("\\$author\\$", author, readLines(paste(path, header, sep = "/")))
+  cat(header_content, file = paste(path, header, sep = "/"), sep = "\n")
+  
+  # store threshold that is unique ratio for categorical
+  rmd_content <- sub("\\$thres_uniq_cat\\$", thres_uniq_cat, 
+                     readLines(paste(path, rmd, sep = "/")))
+  cat(rmd_content, file = paste(path, rmd, sep = "/"), sep = "\n") 
+  
+  # store threshold that is unique ratio for numerical
+  rmd_content <- sub("\\$thres_uniq_num\\$", thres_uniq_num, 
+                     readLines(paste(path, rmd, sep = "/")))
+  cat(rmd_content, file = paste(path, rmd, sep = "/"), sep = "\n") 
+  
+  # store created date
+  header_content <- sub("\\$date\\$", create_date, 
+                     readLines(paste(path, header, sep = "/")))
+  cat(header_content, file = paste(path, header, sep = "/"), sep = "\n")   
+  
+  # store logo image
+  if (is.null(logo_img)) {
+    logo_file <- file.path(system.file(package = "dlookrExtra"), "report", logo)
+    base64_logo <- knitr::image_uri(logo_file)
+  } else {
+    base64_logo <- knitr::image_uri(logo_img)
+  }
+  header_content <- sub("\\$logo\\$", base64_logo,
+                     readLines(paste(path, header, sep = "/")))
+  cat(header_content, file = paste(path, header, sep = "/"), sep = "\n")
+  
+  # rendering
+  rmarkdown::render(paste(path, rmd, sep = "/"), output_file = output_file)
+
+  file.remove(paste(path, rmd, sep = "/"))
+  file.remove(paste(path, header, sep = "/"))  
+  
+  if (browse & file.exists(output_file)) {
+    browseURL(output_file)
+  }
+}
+
+
 #' Reporting the information of data diagnosis
 #'
-#' @description The diagnose_paged() report the information for diagnosing
-#' the quality of the data.
+#' @description The diagnose_paged_report() paged report the information 
+#' for diagnosing the quality of the data.
 #'
 #' @details Generate generalized data diagnostic reports automatically.
 #' You can choose to output to pdf and html files.
@@ -58,7 +248,6 @@
 #' @param browse logical. choose whether to output the report results to the browser.
 #' @param title character. title of report. default is "Data Diagnosis Report".
 #' @param subtitle character. subtitle of report. default is name of data.
-#' @param subtitle character. subtitle of report. default is name of data.
 #' @param abstract_title character. abstract title of report. default is 
 #' "Report Overview".
 #' @param abstract character. abstract of report. 
@@ -82,25 +271,28 @@
 #'
 #' @examples
 #' \dontrun{
-#' # create pdf file. file name is DataDiagnosis_Report.pdf
-#' diagnose_paged(heartfailure)
+#' # create pdf file. file name is Diagnosis_Paged_Report.pdf
+#' diagnose_paged_report(heartfailure)
 #' 
 #' # create pdf file. file name is Diagn.pdf. and change cover image
 #' # cover <- file.path(system.file(package = "dlookrExtra"), "report", "cover2.jpg")
-#' # diagnose_paged(heartfailure, cover_img = cover, title_color = "gray",
+#' # diagnose_paged_report(heartfailure, cover_img = cover, title_color = "gray",
 #'     output_file = "Diagn.pdf")
 #'
 #' # create pdf file. file name is ./Diagn.pdf and not browse
 #' # cover <- file.path(system.file(package = "dlookrExtra"), "report", "cover3.jpg")
-#' # diagnose_paged(heartfailure, output_dir = ".", cover_img = cover, 
+#' # diagnose_paged_report(heartfailure, output_dir = ".", cover_img = cover, 
 #' #    flag_content_missing = FALSE, output_file = "Diagn.pdf", browse = FALSE)
+#' 
+#' # create pdf file. file name is Diagnosis_Paged_Report.html
+#' # diagnose_paged_report(heartfailure, output_format = "html")
 #' }
 #' 
 #' @importFrom rmarkdown render
 #' @importFrom pagedown chrome_print
 #' @importFrom knitr image_uri
 #' @export
-diagnose_paged <- function(.data, output_format = c("html", "pdf"),
+diagnose_paged_report <- function(.data, output_format = c("pdf", "html"),
                            output_file = NULL, output_dir = tempdir(),   
                            browse = TRUE, title = "Data Diagnosis Report",
                            subtitle = deparse(substitute(.data)),
@@ -109,21 +301,22 @@ diagnose_paged <- function(.data, output_format = c("html", "pdf"),
                            thres_uniq_cat = 0.5, thres_uniq_num = 0.1,
                            flag_content_zero = TRUE, flag_content_minus = TRUE,
                            flag_content_missing = TRUE, cover_img = NULL, 
-                           logo_img = NULL, theme = "orange", ...) {
+                           logo_img = NULL, theme = c("orange", "blue")[1], ...) {
   output_format <- match.arg(output_format)
   
   assign("reportData", as.data.frame(.data), .dlookrExtraEnv)
   
   path <- output_dir
-
-  rmd   <- "diagnosis_report_temp.Rmd"
-  html  <- "diagnosis_report_temp.html"  
+  
+  rmd   <- "diagnosis_paged_temp.Rmd"
+  html  <- "diagnosis_paged_temp.html"
   cover <- "cover1.jpg"
   logo  <- "dlookr.svg"  
-    
+  
   if (is.null(output_file))
-    output_file <- "Diagnosis_Report.pdf"
-    
+    output_file <- paste("Diagnosis_Paged_Report", output_format, sep = ".")
+  output_file <- paste(path, output_file, sep = "/")
+  
   #--Copy files ----------------------------------------------------------------
   # copy markdown
   rmd_file <- file.path(system.file(package = "dlookrExtra"), "report", rmd)
@@ -172,12 +365,12 @@ diagnose_paged <- function(.data, output_format = c("html", "pdf"),
   rmd_content <- sub("\\$thres_uniq_cat\\$", thres_uniq_cat, 
                      readLines(paste(path, rmd, sep = "/")))
   cat(rmd_content, file = paste(path, rmd, sep = "/"), sep = "\n") 
-    
+  
   # store threshold that is unique ratio for numerical
   rmd_content <- sub("\\$thres_uniq_num\\$", thres_uniq_num, 
                      readLines(paste(path, rmd, sep = "/")))
   cat(rmd_content, file = paste(path, rmd, sep = "/"), sep = "\n") 
-
+  
   # store logo image
   if (is.null(logo_img)) {
     logo_file <- file.path(system.file(package = "dlookrExtra"), "report", logo)
@@ -217,7 +410,7 @@ diagnose_paged <- function(.data, output_format = c("html", "pdf"),
   # zero contents
   if (flag_content_zero) {
     rmd_content <- gsub("\\$content_zero\\$", "", 
-                       readLines(paste(path, rmd, sep = "/")))
+                        readLines(paste(path, rmd, sep = "/")))
     cat(rmd_content, file = paste(path, rmd, sep = "/"), sep = "\n")     
   } else {
     txt <- readLines(paste(path, rmd, sep = "/")) %>% 
@@ -240,13 +433,18 @@ diagnose_paged <- function(.data, output_format = c("html", "pdf"),
       cat(file = paste(path, rmd, sep = "/"))   
   }
   
-  html_out <- rmarkdown::render(paste(path, rmd, sep = "/"))
-  pagedown::chrome_print(html_out, output = paste(path, output_file, sep = "/"))
-
-  file.remove(paste(path, rmd, sep = "/"))
-  file.remove(paste(path, html, sep = "/"))  
+  if (output_format == "pdf") {
+    html_out <- rmarkdown::render(paste(path, rmd, sep = "/"))
+    pagedown::chrome_print(html_out, output = output_file)
+    
+    file.remove(paste(path, html, sep = "/"))
+  } else {
+    rmarkdown::render(paste(path, rmd, sep = "/"), output_file = output_file)
+  }
   
-  if (browse & file.exists(paste(path, output_file, sep = "/"))) {
-    browseURL(paste(path, output_file, sep = "/"))
+  file.remove(paste(path, rmd, sep = "/"))
+  
+  if (browse & file.exists(output_file)) {
+    browseURL(output_file)
   }
 }

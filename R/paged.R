@@ -27,6 +27,18 @@ break_page_asis <- function() {
   )
 }
 
+#' @name break_line_asis
+#' @rdname break_page
+#' @importFrom htmltools br
+#' @export
+break_line_asis <- function(n = 1) {
+  for (i in seq(n)) {
+    htmltools::br() %>% 
+      as.character() %>% 
+      cat()
+  }
+}
+
 #' @importFrom knitr kable
 #' @importFrom kableExtra kable_styling
 #' @importFrom htmltools HTML div
@@ -48,10 +60,6 @@ print_tab <- function(tab, n_rows = 25, add_row = 3, caption = "", full_width = 
       idx <- (max(idx) + 1):(max(idx) + n_rows + add_row) %>% 
         pmin(N) 
     }
-
-    # idx <- ((i - 1) * n_rows + 1):(i * n_rows) %>% 
-    #   pmin(nrow(tab)) %>% 
-    #   unique()
     
     knitr::kable(tab[idx, ], digits = 2, format = "html",
                  caption = ifelse(i > 1, paste(caption, "(continued)"), caption), 

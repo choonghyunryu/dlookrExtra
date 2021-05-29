@@ -3,11 +3,14 @@
 \name{break_page}
 \alias{break_page}
 \alias{break_page_asis}
+\alias{break_line_asis}
 \title{Breaking pages in HTML}
 \usage{
 break_page()
 
 break_page_asis()
+
+break_line_asis(n = 1)
 }
 \value{
 HTML code

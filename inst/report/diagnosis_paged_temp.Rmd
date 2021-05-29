@@ -70,7 +70,7 @@ print_tab(diagn_overview, caption = cap, n_rows = 23, add_row = 5)
 ```
 
 $content_missing$
-## Missing Value
+## Missing Values
 ### List of Missing Values
 ```{r missing-data, echo=FALSE, warning=FALSE, message=FALSE, results='asis'}
 diagn_missing <- diagn_overview %>%
@@ -104,7 +104,7 @@ $content_missing$
 
 ### Categorical Vaiables 
 ```{r unique-date-category, echo=FALSE, warning=FALSE, message=FALSE, results='asis'}
-thres <- 0.5
+thres <- $thres_uniq_cat$
   
 diagn_uniq_cat <- diagn_overview %>%
   filter(type %in% c("character", "factor", "ordered")) %>%
@@ -123,7 +123,7 @@ if (NROW(diagn_uniq_cat) > 0) {
 
 ### Numerical Variables
 ```{r unique-data-numeric, echo=FALSE, warning=FALSE, message=FALSE, results='asis'}
-thres <- 0.1
+thres <- $thres_uniq_num$
   
 diagn_uniq_num <- diagn_overview %>%
   filter(type %in% c("numeric", "integer")) %>%
