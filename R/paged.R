@@ -29,16 +29,29 @@ break_page_asis <- function() {
 
 #' @importFrom knitr kable
 #' @importFrom kableExtra kable_styling
+#' @importFrom htmltools HTML div
 #' @import dplyr
 #' @export
-print_tab <- function(tab, n_rows = 25, caption = "", full_width = TRUE,
+print_tab <- function(tab, n_rows = 25, add_row = 3, caption = "", full_width = TRUE,
                       font_size = 14) {
-  n_pages <- ceiling(nrow(tab) / n_rows)
+  N <- nrow(tab)
+  n_pages <- 1
   
+  if (N > n_rows) {
+    n_pages <- n_pages + ceiling((N - n_rows) / (n_rows + add_row))
+  }
+
   for (i in seq(n_pages)) {
-    idx <- ((i - 1) * n_rows + 1):(i * n_rows) %>% 
-      pmin(nrow(tab)) %>% 
-      unique()
+    if (i == 1) {
+      idx <- intersect(seq(N), seq(n_rows))
+    } else {
+      idx <- (max(idx) + 1):(max(idx) + n_rows + add_row) %>% 
+        pmin(N) 
+    }
+
+    # idx <- ((i - 1) * n_rows + 1):(i * n_rows) %>% 
+    #   pmin(nrow(tab)) %>% 
+    #   unique()
     
     knitr::kable(tab[idx, ], digits = 2, format = "html",
                  caption = ifelse(i > 1, paste(caption, "(continued)"), caption), 
@@ -47,6 +60,8 @@ print_tab <- function(tab, n_rows = 25, caption = "", full_width = TRUE,
                                 position = "left") %>% 
       cat()
     
-    break_page_asis()
+    if (n_pages == 1 | i < n_pages) {
+      break_page_asis()
+    }
   }
 }
