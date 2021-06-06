@@ -49,11 +49,17 @@ reportData <- get("reportData", .dlookrExtraEnv)
 ```
 
 # Data Diagnosis
-
 ## Overview
 
-* `r nrow(reportData) %>% format(big.mark = ",")` Observations and `r ncol(reportData)` Variables.
-* `r sum(complete.cases(reportData)) %>% format(big.mark = ",")` (`r (sum(complete.cases(reportData)) / nrow(reportData) * 100) %>% round(2)`%) Complete Cases.
+```{r overview-pre, echo=FALSE, warning=FALSE, message=FALSE, results='asis'}
+ov <- overview(reportData)
+
+cap <- "Overview data structures"
+
+print_tab(ov, caption = cap, n_rows = 23)
+```
+
+### Missing/Unique Values
 
 ```{r overview, echo=FALSE, warning=FALSE, message=FALSE, results='asis'}
 N <- NROW(reportData)

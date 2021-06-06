@@ -18,6 +18,9 @@
 #'   \item Data Diagnosis
 #'   \itemize{
 #'     \item Overview 
+#'     \itemize{
+#'       \item Missing/Unique Values
+#'     }
 #'     \item Missing Values
 #'     \itemize{
 #'       \item List of Missing Values
@@ -99,7 +102,7 @@ diagnose_report <- function(.data, output_file = NULL, output_dir = tempdir(),
   logo  <- "dlookr_html.svg"  
   
   if (is.null(output_file))
-    output_file <- "Diagnosis_Paged_Report.html"
+    output_file <- "Diagnosis_Report.html"
   output_file <- paste(path, output_file, sep = "/")
   
   #--Copy files ----------------------------------------------------------------
@@ -208,6 +211,9 @@ diagnose_report <- function(.data, output_file = NULL, output_dir = tempdir(),
 #'   \item Data Diagnosis
 #'   \itemize{
 #'     \item Overview 
+#'     \itemize{
+#'       \item Missing/Unique Values
+#'     }
 #'     \item Missing Values
 #'     \itemize{
 #'       \item List of Missing Values
@@ -443,6 +449,196 @@ diagnose_paged_report <- function(.data, output_format = c("pdf", "html"),
   }
   
   file.remove(paste(path, rmd, sep = "/"))
+  
+  if (browse & file.exists(output_file)) {
+    browseURL(output_file)
+  }
+}
+
+
+
+#' Reporting the information of EDA with html
+#'
+#' @description The eda_report() report the information for diagnosing
+#' the quality of the data.
+#'
+#' @details Generate generalized data diagnostic reports automatically.
+#' You can choose to output to pdf and html files.
+#' This is useful for diagnosing a data frame with a large number of variables
+#' than data with a small number of variables.
+#' 
+#' The title and subtitle colors should be designated by the color name used in 
+#' CSS of html, not the color defined in R. 
+#' 
+#' @section Reported information:
+#' Reported from the data diagnosis is as follows.
+#'
+#' \itemize{
+#'   \item Data Diagnosis
+#'   \itemize{
+#'     \item Overview 
+#'     \item Missing Values
+#'     \itemize{
+#'       \item List of Missing Values
+#'       \item Visualization
+#'     }
+#'     \item Unique Values
+#'     \itemize{
+#'       \item Categorical Variables
+#'       \item Numerical Variables
+#'     }
+#'   }
+#'   \item Categorical Variable Diagnosis
+#'   \itemize{
+#'     \item Top Ranks
+#'   }   
+#'   \item Numerical Variable Diagnosis
+#'   \itemize{
+#'     \item Distribution
+#'     \itemize{
+#'       \item Zero Values
+#'       \item Minus Values
+#'     }
+#'     \item Outliers
+#'     \itemize{
+#'       \item List of Outliers
+#'       \item Individual Outliers
+#'     }
+#'   }
+#' }
+#'
+#' @param .data a data.frame or a \code{\link{tbl_df}}.
+#' @param output_file name of generated file. default is NULL.
+#' @param output_dir name of directory to generate report file. default is tempdir().
+#' @param browse logical. choose whether to output the report results to the browser.
+#' @param title character. title of report. default is "Data Diagnosis Report".
+#' @param subtitle character. subtitle of report. default is name of data.
+#' @param author character. author of report. default is "".
+#' @param title_color character. color of title. default is "white".
+#' @param thres_uniq_cat numeric. threshold to use for "Unique Values - 
+#' Categorical Variables". default is 0.5.
+#' @param thres_uniq_num numeric. threshold to use for "Unique Values - 
+#' Numerical Variables". default is 0.1.
+#' @param logo_img character. name of logo image on top right.
+#' @param theme character. name of theme for report. support "orange" and "blue". 
+#' default is "orange".
+#' @param ... arguments to be passed to methods.
+#'
+#' @examples
+#' \dontrun{
+#' # create pdf file. file name is Diagnosis_Paged_Report.pdf
+#' eda_report(heartfailure)
+#' 
+#' # file name is EDA.html. and change logo image
+#' # logo <- file.path(system.file(package = "dlookrExtra"), "report", "R_logo_html.svg")
+#' # eda_report(heartfailure, logo_img = logo, title_color = "black",
+#'     output_file = "EDA.html")
+#'
+#' # file name is ./EDA_heartfailure.html, "blue" theme and not browse
+#' # eda_report(heartfailure, output_dir = ".", author = "Choonghyun Ryu",
+#' #    output_file = "EDA_heartfailure.html", theme = "blue", browse = FALSE)
+#' }
+#' 
+#' @importFrom rmarkdown render
+#' @importFrom knitr image_uri
+#' @export
+eda_report <- function(.data, target = NULL, output_file = NULL, 
+                       output_dir = tempdir(), browse = TRUE, 
+                       title = "Data Diagnosis",
+                       subtitle = deparse(substitute(.data)), author = "",
+                       title_color = "gray", logo_img = NULL, 
+                       create_date = format(Sys.Date(),  '%d %B %Y'),
+                       theme = c("orange", "blue")[1], ...) {
+  tryCatch(vars <- tidyselect::vars_select(names(.data),
+                                           !! rlang::enquo(target)),
+           error = function(e) {
+             pram <- as.character(substitute(target))
+             stop(sprintf("Column %s is unknown", pram))
+           },
+           finally = NULL)
+
+  assign("reportData", as.data.frame(.data), .dlookrExtraEnv)
+  assign("targetVariable", vars, .dlookrExtraEnv)
+  
+  path <- output_dir
+  
+  rmd   <- "eda_temp.Rmd"
+  header <- "header_temp.html"
+  logo  <- "dlookr_html.svg"  
+  
+  if (is.null(output_file))
+    output_file <- "EDA_Report.html"
+  output_file <- paste(path, output_file, sep = "/")
+  
+  #--Copy files ----------------------------------------------------------------
+  # copy markdown
+  rmd_file <- file.path(system.file(package = "dlookrExtra"), "report", rmd)
+  flag <- file.copy(from = rmd_file, to = path, recursive = TRUE)
+  
+  # copy header  
+  header_file <- file.path(system.file(package = "dlookrExtra"), "report", header)
+  flag <- file.copy(from = header_file, to = path, recursive = TRUE)  
+  
+  #--Store parameters ----------------------------------------------------------  
+  # store theme
+  if (theme == "orange") {
+    rmd_content <- gsub("\\$navbar\\$", "var(--custom-lightorange)", 
+                        readLines(paste(path, rmd, sep = "/")))
+    cat(rmd_content, file = paste(path, rmd, sep = "/"), sep = "\n")
+    
+    rmd_content <- gsub("\\$listgitem\\$", "var(--custom-orange)", 
+                        readLines(paste(path, rmd, sep = "/")))
+    cat(rmd_content, file = paste(path, rmd, sep = "/"), sep = "\n")    
+  } else if (theme == "blue") {
+    rmd_content <- gsub("\\$navbar\\$", "var(--custom-lightblue)", 
+                        readLines(paste(path, rmd, sep = "/")))
+    cat(rmd_content, file = paste(path, rmd, sep = "/"), sep = "\n")
+    
+    rmd_content <- gsub("\\$listgitem\\$", "var(--custom-blue)", 
+                        readLines(paste(path, rmd, sep = "/")))
+    cat(rmd_content, file = paste(path, rmd, sep = "/"), sep = "\n")        
+  }  
+  
+  # store title
+  header_content <- sub("\\$title\\$", title, readLines(paste(path, header, sep = "/")))
+  cat(header_content, file = paste(path, header, sep = "/"), sep = "\n")
+  
+  # store subtitle
+  header_content <- sub("\\$subtitle\\$", subtitle, readLines(paste(path, header, sep = "/")))
+  cat(header_content, file = paste(path, header, sep = "/"), sep = "\n")
+  
+  # store title color
+  rmd_content <- sub("\\$title_color\\$", title_color, readLines(paste(path, rmd, sep = "/")))
+  cat(rmd_content, file = paste(path, rmd, sep = "/"), sep = "\n")
+  
+  # store author
+  if (author != "") {
+    author <- paste("Creat by :", author)
+  }
+  header_content <- sub("\\$author\\$", author, readLines(paste(path, header, sep = "/")))
+  cat(header_content, file = paste(path, header, sep = "/"), sep = "\n")
+  
+  # store created date
+  header_content <- sub("\\$date\\$", create_date, 
+                        readLines(paste(path, header, sep = "/")))
+  cat(header_content, file = paste(path, header, sep = "/"), sep = "\n")   
+  
+  # store logo image
+  if (is.null(logo_img)) {
+    logo_file <- file.path(system.file(package = "dlookrExtra"), "report", logo)
+    base64_logo <- knitr::image_uri(logo_file)
+  } else {
+    base64_logo <- knitr::image_uri(logo_img)
+  }
+  header_content <- sub("\\$logo\\$", base64_logo,
+                        readLines(paste(path, header, sep = "/")))
+  cat(header_content, file = paste(path, header, sep = "/"), sep = "\n")
+  
+  # rendering
+  rmarkdown::render(paste(path, rmd, sep = "/"), output_file = output_file)
+  
+  file.remove(paste(path, rmd, sep = "/"))
+  file.remove(paste(path, header, sep = "/"))  
   
   if (browse & file.exists(output_file)) {
     browseURL(output_file)

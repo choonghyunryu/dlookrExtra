@@ -72,6 +72,9 @@ Reported from the data diagnosis is as follows.
   \item Data Diagnosis
   \itemize{
     \item Overview 
+    \itemize{
+      \item Missing/Unique Values
+    }
     \item Missing Values
     \itemize{
       \item List of Missing Values
