@@ -62,10 +62,13 @@
 #' @param thres_uniq_cat numeric. threshold to use for "Unique Values - 
 #' Categorical Variables". default is 0.5.
 #' @param thres_uniq_num numeric. threshold to use for "Unique Values - 
-#' Numerical Variables". default is 0.1.
+#' Numerical Variables". default is 5.
 #' @param logo_img character. name of logo image on top right.
 #' @param theme character. name of theme for report. support "orange" and "blue". 
 #' default is "orange".
+#' @param sample numeric. ratio of the sample. It takes a real number 
+#' between (0, 1) as an argument value. The default value is 1, and all data 
+#' is diagnosed.
 #' @param ... arguments to be passed to methods.
 #'
 #' @examples
@@ -90,10 +93,19 @@ diagnose_report <- function(.data, output_file = NULL, output_dir = tempdir(),
                             browse = TRUE, title = "Data Diagnosis",
                             subtitle = deparse(substitute(.data)), author = "",
                             title_color = "gray", thres_uniq_cat = 0.5, 
-                            thres_uniq_num = 0.1, logo_img = NULL, 
+                            thres_uniq_num = 5, logo_img = NULL, 
                             create_date = format(Sys.Date(),  '%d %B %Y'),
-                            theme = c("orange", "blue")[1], ...) {
-  assign("reportData", as.data.frame(.data), .dlookrExtraEnv)
+                            theme = c("orange", "blue")[1], 
+                            sample = 1, ...) {
+  if (sample > 0 & sample < 1) {
+    N <- nrow(.data)
+    idx <- sample(seq(N), round(N * sample))
+    
+    assign("reportData", as.data.frame(.data[idx, ]), .dlookrExtraEnv)
+  } else {
+    assign("reportData", as.data.frame(.data), .dlookrExtraEnv)
+  }
+
   
   path <- output_dir
   
@@ -148,9 +160,18 @@ diagnose_report <- function(.data, output_file = NULL, output_dir = tempdir(),
   
   # store author
   if (author != "") {
-    author <- paste("Creat by :", author)
+    author <- paste(" Creat by :", author)
   }
   header_content <- sub("\\$author\\$", author, readLines(paste(path, header, sep = "/")))
+  cat(header_content, file = paste(path, header, sep = "/"), sep = "\n")
+  
+  # store sample
+  if (sample > 0  & sample < 1) {
+    sample <- sprintf("Used samples [%s / %s] ", length(idx), N)
+  } else {
+    sample <- ""
+  }
+  header_content <- sub("\\$sample\\$", sample, readLines(paste(path, header, sep = "/")))
   cat(header_content, file = paste(path, header, sep = "/"), sep = "\n")
   
   # store threshold that is unique ratio for categorical
@@ -262,7 +283,7 @@ diagnose_report <- function(.data, output_file = NULL, output_dir = tempdir(),
 #' @param thres_uniq_cat numeric. threshold to use for "Unique Values - 
 #' Categorical Variables". default is 0.5.
 #' @param thres_uniq_num numeric. threshold to use for "Unique Values - 
-#' Numerical Variables". default is 0.1.
+#' Numerical Variables". default is 0.01.
 #' @param flag_content_missing logical. whether to output "Missing Value" information. 
 #' the default value is TRUE, and the information is displayed.
 #' @param flag_content_zero logical. whether to output "Zero Values" information. 
@@ -304,7 +325,7 @@ diagnose_paged_report <- function(.data, output_format = c("pdf", "html"),
                            subtitle = deparse(substitute(.data)),
                            abstract_title = "Report Overview", abstract = NULL,
                            title_color = "white", subtitle_color = "gold",
-                           thres_uniq_cat = 0.5, thres_uniq_num = 0.1,
+                           thres_uniq_cat = 0.5, thres_uniq_num = 0.01,
                            flag_content_zero = TRUE, flag_content_minus = TRUE,
                            flag_content_missing = TRUE, cover_img = NULL, 
                            logo_img = NULL, theme = c("orange", "blue")[1], ...) {

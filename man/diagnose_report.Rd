@@ -14,10 +14,11 @@ diagnose_report(
   author = "",
   title_color = "gray",
   thres_uniq_cat = 0.5,
-  thres_uniq_num = 0.1,
+  thres_uniq_num = 5,
   logo_img = NULL,
   create_date = format(Sys.Date(), "\%d \%B \%Y"),
   theme = c("orange", "blue")[1],
+  sample = 1,
   ...
 )
 }
@@ -42,12 +43,16 @@ diagnose_report(
 Categorical Variables". default is 0.5.}
 
 \item{thres_uniq_num}{numeric. threshold to use for "Unique Values - 
-Numerical Variables". default is 0.1.}
+Numerical Variables". default is 5.}
 
 \item{logo_img}{character. name of logo image on top right.}
 
 \item{theme}{character. name of theme for report. support "orange" and "blue". 
 default is "orange".}
+
+\item{sample}{numeric. ratio of the sample. It takes a real number 
+between (0, 1) as an argument value. The default value is 1, and all data 
+is diagnosed.}
 
 \item{...}{arguments to be passed to methods.}
 }

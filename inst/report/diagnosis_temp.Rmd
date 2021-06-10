@@ -26,18 +26,11 @@ library(reactable)
 library(htmltools)
 ```
 
-```{r udf}
-# User defined functions
-html_cat <- function(msg) {
-  div(class = "caption", style = "padding-top: 8px; padding-bottom: 8px;
-      color: #777777; text-align: left;", msg) %>% 
-    as.character() %>% 
-    cat()
-}
-```
-
 ```{r import-data}
 reportData <- get("reportData", .dlookrExtraEnv)
+
+thres_uniq_cat <- $thres_uniq_cat$
+thres_uniq_num <- $thres_uniq_num$  
 ```
 
 ```{css, echo=FALSE}
@@ -87,7 +80,7 @@ a {
 .tag {
   display: inline-block;
   padding: 2px 12px;
-  border-radius: 15px;
+  border-radius: 5px;
   font-weight: 600;
   font-size: 12px;
 }
@@ -123,7 +116,8 @@ diagn_numeric <- diagnose_numeric(reportData)
 
 tab_warning <- data.frame(
   warnings = character(500), status = character(500), variables = character(500),
-  indicator = numeric(500), ratio = numeric(500), recommand = character(500))
+  types = character(500), indicator = numeric(500), ratio = numeric(500), 
+  recommand = character(500), stringsAsFactors = FALSE)
 
 # duplicate --------------------------------------------------------------------
 idx_last <- 0
@@ -134,6 +128,7 @@ if (n_duplicate > 0) {
   
   tab_warning$status[idx]    <- "duplicate"
   tab_warning$variables[idx] <- NA
+  tab_warning$types[idx] <- NA  
   tab_warning$indicator[idx] <- n_duplicate
   tab_warning$ratio[idx]     <- n_duplicate / N
   tab_warning$warnings[idx]  <- sprintf(
@@ -141,15 +136,16 @@ if (n_duplicate > 0) {
     format(n_duplicate, big.mark = ","),
     round(n_duplicate / N * 100, 1))
   tab_warning$recommand[idx]  <- "check"  
+} else {
+  idx <- NULL
 }
-
 
 # missing ----------------------------------------------------------------------
 idx_last <- idx_last + length(idx)
 
 warn_miss <- diagn_na_unique %>% 
   filter(missing_count > 0) %>% 
-  select(variables, missing_count, missing_percent) %>% 
+  select(variables, types, missing_count, missing_percent) %>% 
   arrange(desc(missing_count))
 
 if (nrow(warn_miss) > 0) {
@@ -157,6 +153,7 @@ if (nrow(warn_miss) > 0) {
   
   tab_warning$status[idx]    <- "missing"
   tab_warning$variables[idx] <- warn_miss$variables
+  tab_warning$types[idx]     <- warn_miss$types  
   tab_warning$indicator[idx] <- warn_miss$missing_count
   tab_warning$ratio[idx]     <- warn_miss$missing_percent / 100
   tab_warning$warnings[idx]  <- sprintf(
@@ -164,49 +161,111 @@ if (nrow(warn_miss) > 0) {
     format(warn_miss$missing_count, big.mark = ","),
     round(warn_miss$missing_percent, 1))
   tab_warning$recommand[idx]  <- "judgement"
-}  
+} else {
+  idx <- NULL
+}
 
-# cardinally: identifier -------------------------------------------------------
+# cardinality: identifier ------------------------------------------------------
 idx_last <- idx_last + length(idx)
 
 warn_identifier <- diagn_na_unique %>% 
   filter(unique_rate == 1) %>% 
-  select(variables, unique_count, unique_rate)
+  select(variables, types, unique_count, unique_rate)
 
 if (nrow(warn_identifier) > 0) {
   idx <- seq(nrow(warn_identifier)) + idx_last
   
-  tab_warning$status[idx]     <- "cardinally"
+  tab_warning$status[idx]     <- "cardinality"
   tab_warning$variables[idx]  <- warn_identifier$variables
+  tab_warning$types[idx]      <- warn_identifier$types    
   tab_warning$indicator[idx]  <- warn_identifier$unique_count
   tab_warning$ratio[idx]      <- warn_identifier$unique_rate 
   tab_warning$warnings[idx]   <- sprintf(
     "%s has high(%.2f) cardinality, Maybe identifier",
     warn_identifier$variables, warn_identifier$unique_rate)
   tab_warning$recommand[idx]  <- "check"  
-}  
+} else {
+  idx <- NULL
+}
 
-# cardinally: constant ---------------------------------------------------------
+# cardinality: constant --------------------------------------------------------
 idx_last <- idx_last + length(idx)
 
 warn_constant <- diagn_na_unique %>% 
   filter(unique_count == 1) %>% 
-  select(variables, unique_count, unique_rate)
+  select(variables, types, unique_count, unique_rate)
 
 if (nrow(warn_constant) > 0) {
   idx <- seq(nrow(warn_constant)) + idx_last
   
-  tab_warning$status[idx]     <- "cardinally"
+  tab_warning$status[idx]     <- "cardinality"
   tab_warning$variables[idx]  <- warn_constant$variables
+  tab_warning$types[idx]      <- warn_constant$types   
   tab_warning$indicator[idx]  <- warn_constant$unique_count
   tab_warning$ratio[idx]      <- warn_constant$unique_rate 
   tab_warning$warnings[idx]   <- sprintf(
     "%s has constant value \"%s\"",
-    warn_constant$variables, unlist(reportData[1, warn_constant$variables]))  
+    warn_constant$variables, 
+    reportData[1, warn_constant$variables %>% as.character()] %>% 
+      t() %>% 
+      as.vector()
+    )  
   tab_warning$recommand[idx]  <- "remove"
+} else {
+  idx <- NULL
 }
 
-# cardinally: zeros ------------------------------------------------------------
+# cardinally: high cardinality(category) ---------------------------------------
+idx_last <- idx_last + length(idx)
+
+warn_unique_cat <- diagn_na_unique %>% 
+  filter(types %in% c("character", "factor", "ordered", "Date", "POSIXct")) %>%
+  filter(unique_rate >= thres_uniq_cat & unique_rate < 1) %>%
+  select(variables, types, unique_count, unique_rate)
+
+if (nrow(warn_unique_cat) > 0) {
+  idx <- seq(nrow(warn_unique_cat)) + idx_last
+  
+  tab_warning$status[idx]     <- "cardinality"
+  tab_warning$variables[idx]  <- warn_unique_cat$variables
+  tab_warning$types[idx]      <- warn_unique_cat$types   
+  tab_warning$indicator[idx]  <- warn_unique_cat$unique_count
+  tab_warning$ratio[idx]      <- warn_unique_cat$unique_rate 
+  tab_warning$warnings[idx]   <- sprintf(
+    "%s has a high cardinality. %s (%s%%) distinct values",
+    warn_unique_cat$variables, 
+    format(warn_unique_cat$unique_count, big.mark = ","),
+    round(warn_unique_cat$unique_rate * 100, 1))  
+  tab_warning$recommand[idx]  <- "judgement"
+} else {
+  idx <- NULL
+}
+
+# cardinally: low cardinality(numerical) ---------------------------------------
+warn_unique_num <- diagn_na_unique %>% 
+  filter(types %in% c("numeric", "integer")) %>%
+  filter(unique_count <= thres_uniq_num & unique_count > 1) %>%
+  select(variables, types, unique_count, unique_rate)
+
+if (nrow(warn_unique_num) > 0) {
+  idx <- seq(nrow(warn_unique_num)) + idx_last
+  
+  tab_warning$status[idx]     <- "cardinality"
+  tab_warning$variables[idx]  <- warn_unique_num$variables
+  tab_warning$types[idx]      <- warn_unique_num$types   
+  tab_warning$indicator[idx]  <- warn_unique_num$unique_count
+  tab_warning$ratio[idx]      <- warn_unique_num$unique_rate 
+  tab_warning$warnings[idx]   <- sprintf(
+    "%s has a low cardinality. %s (%s%%) distinct values",
+    warn_unique_num$variables, 
+    format(warn_unique_num$unique_count, big.mark = ","),
+    round(warn_unique_num$unique_rate * 100, 1))  
+  tab_warning$recommand[idx]  <- "judgement"
+} else {
+  idx <- NULL
+}
+
+# zeros ------------------------------------------------------------------------
 idx_last <- idx_last + length(idx)
 
 warn_zero <- diagn_numeric %>% 
@@ -217,14 +276,17 @@ warn_zero <- diagn_numeric %>%
 if (nrow(warn_zero) > 0) {
   idx <- seq(nrow(warn_zero)) + idx_last
   
-  tab_warning$status[idx]     <- "zeros"
+  tab_warning$status[idx]     <- "zero"
   tab_warning$variables[idx]  <- warn_zero$variables
+  tab_warning$types[idx]      <- NA  
   tab_warning$indicator[idx]  <- warn_zero$zero
   tab_warning$ratio[idx]      <- warn_zero$zero / N 
   tab_warning$warnings[idx]   <- sprintf(
-    "%s has %s (%s%%) zeros",
-    warn_zero$variables, warn_zero$zero, round(tab_warning$ratio[idx] * 100, 2))  
+    "%s has %s (%s%%) zeros", warn_zero$variables, 
+    format(warn_zero$zero, big.mark = ","), round(warn_zero$zero / N * 100, 2))  
   tab_warning$recommand[idx]  <- "check"
+} else {
+  idx <- NULL
 }
 
 # cardinally: negative ---------------------------------------------------------
@@ -240,25 +302,67 @@ if (nrow(warn_minus) > 0) {
   
   tab_warning$status[idx]     <- "negative"
   tab_warning$variables[idx]  <- warn_minus$variables
+  tab_warning$types[idx]      <- NA    
   tab_warning$indicator[idx]  <- warn_minus$minus
   tab_warning$ratio[idx]      <- warn_minus$minus / N 
   tab_warning$warnings[idx]   <- sprintf(
-    "%s has %s (%s%%) negative",
-    warn_minus$variables, warn_minus$minus, round(tab_warning$ratio[idx] * 100, 2))  
+    "%s has %s (%s%%) negatives",
+    warn_minus$variables, format(warn_minus$minus, big.mark = ","),
+    round(warn_minus$minus / N * 100, 2))  
   tab_warning$recommand[idx]  <- "check"
+} else {
+  idx <- NULL
+}
+
+# outlier ----------------------------------------------------------------------
+idx_last <- idx_last + length(idx)
+
+warn_outlier <- diagn_numeric %>% 
+  filter(outlier > 0) %>% 
+  select(variables, outlier) %>% 
+  arrange(desc(outlier))
+
+if (nrow(warn_outlier) > 0) {
+  idx <- seq(nrow(warn_outlier)) + idx_last
+  
+  tab_warning$status[idx]     <- "outlier"
+  tab_warning$variables[idx]  <- warn_outlier$variables
+  tab_warning$types[idx]      <- NA    
+  tab_warning$indicator[idx]  <- warn_outlier$outlier
+  tab_warning$ratio[idx]      <- warn_outlier$outlier / N 
+  tab_warning$warnings[idx]   <- sprintf(
+    "%s has %s (%s%%) outliers",
+    warn_outlier$variables, format(warn_outlier$outlier, big.mark = ","),
+    round(warn_outlier$outlier / N * 100, 2))  
+  tab_warning$recommand[idx]  <- "judgement"
+} else {
+  idx <- NULL
 }
 
 tab_warning <- tab_warning %>% 
   filter(status != "")
 ```
 
-# Overview
-## Data Structures
+```{r overview, results='asis'}
+h1("Overview")
+```
 
-```{r overview_pre, results='asis'}
+```{r overview-datastructure, results='asis'}
+h2("Data Structures")
+```
+
+```{r overview-pre, results='asis'}
 tab_left <- ov[1:9, ]
 tab_right <- ov[10:nrow(ov), ]
 rownames(tab_right) <- seq(nrow(tab_right))
+
+tab_left <- tab_left %>% 
+  mutate(value = ifelse (metrics %in% "memory size", 
+                         ifelse(value / 1024^2 > 0, round(value / 1024^2),
+                                round(value / 1024)), value)) %>%   
+  mutate(metrics = ifelse (metrics %in% "memory size", 
+                         ifelse(value / 1024^2 > 0, "memory size (MB)",
+                                "memory size (KB)"), metrics))
 
 cap <- "Data Structures"
 knitr::kable(tab_left, digits = 2, caption = cap, format = "html",
@@ -275,22 +379,37 @@ breaks <- 9 - nrow(tab_right) + 3
 break_line_asis(breaks)
 ```
 
-## Warnings
+```{r overview-warnings, results='asis'}
+h2("Warnings")
+```
+
 ```{r warnings, results='asis'}
 tab_warning %>% 
   select(warnings, status, recommand) %>% 
   reactable(
     columns = list(
       warnings = colDef(
-        cell = function(value) {
+        cell = function(value, index) {
           variable_name <- strsplit(value, " ") %>% unlist() %>% "["(1)
           msg <- strsplit(value, " ") %>% unlist() %>% "["(-1) %>% paste(collapse = " ")
           msg <- paste("", msg)
           
-          if (variable_name == "dataset") {
-            variable <- div(style = list(color = "black"), variable_name)            
+          if (tab_warning$status[index] %in% "duplicate") {
+            variable <- a(class = "anchor", href = "#ID-duplicate", variable_name)
+          } else if (tab_warning$status[index] %in% "missing") {
+              variable <- a(class = "anchor", href = "#ID-missing", variable_name)
+          } else if (tab_warning$status[index] %in% "cardinality") {
+            if (tab_warning$types[index] %in% c("character", "factor", "ordered", 
+                                                "Date", "POSIXct"))
+              variable <- a(class = "anchor", href = "#ID-unique-cat", variable_name)
+            else
+              variable <- a(class = "anchor", href = "#ID-unique-num", variable_name)
+          } else if (tab_warning$status[index] %in% "outlier") {
+              variable <- a(class = "anchor", href = "#ID-outlier", variable_name)            
+          } else if (tab_warning$status[index] %in% c("zero", "negative")) {
+              variable <- a(class = "anchor", href = "#ID-variables", variable_name)
           } else {
-            variable <- div(style = list(color = "red"), variable_name)
+            variable <- div(style = list(color = "red"), variable_name) 
           }
 
           tagList(
@@ -301,7 +420,7 @@ tab_warning %>%
       ),
       status = colDef(name = "types", width = 100),
       recommand = colDef(
-        width = 120,
+        width = 130,
         cell = function(value) {
           class <- paste0("tag recommand-", tolower(value))
           div(class = class, value)
@@ -313,32 +432,41 @@ tab_warning %>%
 break_line_asis(2)
 ```
 
-## Variables
+```{r overview-variables, results='asis'}
+h2("Variables", id = "ID-variables")
+```
+
 ```{r variables, results='asis'}
-alert_variable(reportData)
+html_variable(reportData)
 
 break_line_asis(2)
 ```
 
-# Missing Values
-## List of Missing Values
+```{r missing, results='asis'}
+h1("Missing Values")
+```
+
+```{r missing-list, results='asis'}
+h2("List of Missing Values", id = "ID-missing")
+```
+
 ```{r missing_data, comment="", results='asis'}
-names(diagn_na_unique) <- c("variables", "type", "missing value(n)",
-                           "missing value(%)", "unique value(n)",
-                           "unique value(n/N)")
+html_missing(diagn_na_unique)
 
-diagn_missing <- diagn_na_unique %>%
-  filter(`missing value(n)` > 0) %>%
-  arrange(desc(`missing value(n)`)) %>% 
-  select(-5, -6)
+break_line_asis(1)
+```
+
+```{r missing-visualization, results='asis'}
+h2("Visualization")
+```
+
+```{r missing-viz2, dpi=300, fig.height=10, fig.width=10, results='asis'}
+diagn_missing <- diagn_na_unique %>% 
+  filter(missing_count > 0)
 
 if (NROW(diagn_missing) > 0) {
-  cap <- "Variables that include missing values"
-  
-  knitr::kable(diagn_missing, digits = 2, caption = cap, format = "html",
-               format.args = list(big.mark = ",")) %>% 
-    kable_styling(full_width = FALSE, font_size = 15, position = "left") 
-
+  break_line_asis(1)
+  plot_na_intersect(reportData)
 } else {
   html_cat("No variables including missing values")
   break_line_asis(1)
@@ -347,79 +475,44 @@ if (NROW(diagn_missing) > 0) {
 break_line_asis(1)
 ```
 
-## Visualization
-```{r missing-viz, dpi=300, fig.height=6, fig.width=8, results='asis'}
-if (NROW(diagn_missing) > 0) {
-  plot_na_pareto(reportData, only_na = TRUE) +
-    theme(axis.text.x = element_text(angle = 30, hjust = 1))
-} else {
-  html_cat("No variables including missing values")
-  break_line_asis(1)
-}
-
-break_line_asis(1)
+```{r unique, results='asis'}
+h1("Unique Values")
 ```
 
+```{r unique-categorical, results='asis'}
+h2("Categorical Vaiables", id = "ID-unique-cat")
+```
 
-# Unique Values
-## Categorical Vaiables 
 ```{r unique_date_category, comment="", results='asis'}
-thres <- $thres_uniq_cat$
-  
-diagn_uniq_cat <- diagn_na_unique %>%
-  filter(type %in% c("character", "factor", "ordered")) %>%
-  filter(`unique value(n/N)` >= thres) %>%
-  arrange(desc(`unique value(n/N)`))
-
-if (NROW(diagn_uniq_cat) > 0) {
-  cap <- "Variables where the proportion of unique data is more than 0.5"
-  
-  knitr::kable(diagn_uniq_cat, digits = 2, caption = cap, format = "html",
-               format.args = list(big.mark = ",")) %>% 
-    kable_styling(full_width = FALSE, font_size = 15, position = "left") 
-} else {
-  html_cat("No variable with a high proportion greater than 0.5")
-  break_line_asis(1)
-}
+html_unique_cat(diagn_na_unique, thres_uniq_cat)  
 
 break_line_asis(1)
 ```
 
-## Numerical Variables
+```{r unique-numerical, results='asis'}
+h2("Numarical Vaiables", id = "ID-unique-num")
+```
+
 ```{r unique_data_numeric, comment="", results='asis'}
-thres <- $thres_uniq_num$
-  
-diagn_uniq_num <- diagn_na_unique %>%
-  filter(type %in% c("numeric", "integer")) %>%
-  filter(`unique value(n/N)` <= thres) %>%
-  arrange(desc(`unique value(n/N)`))
-
-if (NROW(diagn_uniq_num) > 0) {
-  cap <- "Variables where the proportion of unique data is less than 0.1"
-  
-  knitr::kable(diagn_uniq_num, digits = 2, caption = cap, format = "html",
-               format.args = list(big.mark = ",")) %>% 
-    kable_styling(full_width = FALSE, font_size = 15, position = "left") 
-} else {
-  html_cat("No variable with unique data proportion less than 0.1")
-  break_line_asis(1)
-}
+html_unique_num(diagn_na_unique, thres_uniq_num)  
 
 break_line_asis(1)
 ```
 
-# Outliers
+```{r outliers, results='asis'}
+h1("Outliers", id = "ID-outlier")
+```
 
-```{r outliers, comment="", results='asis'}
+```{r outliers-list, comment="", results='asis'}
 if (NROW(diagn_numeric) > 0) {
   diagn_outlier <- diagn_numeric %>%
     filter(outlier > 0) 
 
   if (NROW(diagn_outlier) > 0) {
     cap <- "Diagnosis of numerical variable outliers"
-  
     html_cat(cap)
-    tab_outlier(reportData)
+    
+    html_outlier(reportData)
     
   } else {
     html_cat("No numeric variables including outliers")
@@ -433,16 +526,24 @@ if (NROW(diagn_numeric) > 0) {
 break_line_asis(1)
 ```
 
-# Samples
-## Duplicated
-```{r duplicated, comment="", results='asis'}
+```{r samples, results='asis'}
+h1("Samples")
+```
+
+```{r duplicated, results='asis'}
+h2("Duplicated", id = "ID-duplicate")
+```
+
+```{r duplicated-list, comment="", results='asis'}
 cap <- "Duplicated records"
   
 idx_dup <- attr(ov, "duplicated")
 
 if (length(idx_dup)) {
   tabs <- reportData[idx_dup, ] %>%
-  reactable::reactable()
+  reactable::reactable(
+    defaultColDef = colDef(minWidth = 150)
+  )
 
   htmlwidgets::prependContent(
     tabs, 
@@ -457,13 +558,18 @@ if (length(idx_dup)) {
 break_line_asis()
 ```
 
-## Heads
+```{r heades, results='asis'}
+h2("Heads")
+```
+
 ```{r sample-head, comment="", results='asis'}
   cap <- "First few records"
   
 tabs <- reportData %>% 
   head(10) %>% 
-  reactable::reactable()
+  reactable::reactable(
+    defaultColDef = colDef(minWidth = 150)
+  )
 
 htmlwidgets::prependContent(tabs, 
     div(class = "caption", style = "padding-top: 8px; padding-bottom: 8px;
@@ -472,13 +578,18 @@ htmlwidgets::prependContent(tabs,
 break_line_asis()
 ```
 
-## Tails
+```{r tails, results='asis'}
+h2("Tails")
+```
+
 ```{r sample-tail, comment=""}
   cap <- "Last few records"
   
 tabs <- reportData %>% 
   tail(10) %>% 
-  reactable::reactable()
+  reactable::reactable(
+    defaultColDef = colDef(minWidth = 150)
+  )
 
 htmlwidgets::prependContent(tabs, 
     div(class = "caption", style = "padding-top: 8px; padding-bottom: 8px;
