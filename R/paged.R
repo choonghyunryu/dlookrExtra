@@ -45,7 +45,7 @@ break_line_asis <- function(n = 1) {
 #' @import dplyr
 #' @export
 print_tab <- function(tab, n_rows = 25, add_row = 3, caption = "", full_width = TRUE,
-                      font_size = 14) {
+                      font_size = 14, align = NULL) {
   N <- nrow(tab)
   n_pages <- 1
   
@@ -61,9 +61,17 @@ print_tab <- function(tab, n_rows = 25, add_row = 3, caption = "", full_width = 
         pmin(N) 
     }
     
-    knitr::kable(tab[idx, ], digits = 2, format = "html",
-                 caption = ifelse(i > 1, paste(caption, "(continued)"), caption), 
-                 format.args = list(big.mark = ",")) %>%
+    if (is.null(align)) {
+      ktab <- knitr::kable(tab[idx, ], digits = 2, format = "html", 
+                           caption = ifelse(i > 1, paste(caption, "(continued)"), caption),
+                           format.args = list(big.mark = ","))
+    } else {
+      ktab <- knitr::kable(tab[idx, ], digits = 2, format = "html", align = align,
+                           caption = ifelse(i > 1, paste(caption, "(continued)"), caption),
+                           format.args = list(big.mark = ","))
+    }
+    
+    ktab %>%
       kableExtra::kable_styling(full_width = full_width, font_size = font_size, 
                                 position = "left") %>% 
       cat()

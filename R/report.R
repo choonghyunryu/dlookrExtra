@@ -283,7 +283,7 @@ diagnose_report <- function(.data, output_file = NULL, output_dir = tempdir(),
 #' @param thres_uniq_cat numeric. threshold to use for "Unique Values - 
 #' Categorical Variables". default is 0.5.
 #' @param thres_uniq_num numeric. threshold to use for "Unique Values - 
-#' Numerical Variables". default is 0.01.
+#' Numerical Variables". default is 5.
 #' @param flag_content_missing logical. whether to output "Missing Value" information. 
 #' the default value is TRUE, and the information is displayed.
 #' @param flag_content_zero logical. whether to output "Zero Values" information. 
@@ -325,7 +325,7 @@ diagnose_paged_report <- function(.data, output_format = c("pdf", "html"),
                            subtitle = deparse(substitute(.data)),
                            abstract_title = "Report Overview", abstract = NULL,
                            title_color = "white", subtitle_color = "gold",
-                           thres_uniq_cat = 0.5, thres_uniq_num = 0.01,
+                           thres_uniq_cat = 0.5, thres_uniq_num = 5,
                            flag_content_zero = TRUE, flag_content_minus = TRUE,
                            flag_content_missing = TRUE, cover_img = NULL, 
                            logo_img = NULL, theme = c("orange", "blue")[1], ...) {

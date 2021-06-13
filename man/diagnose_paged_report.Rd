@@ -17,7 +17,7 @@ diagnose_paged_report(
   title_color = "white",
   subtitle_color = "gold",
   thres_uniq_cat = 0.5,
-  thres_uniq_num = 0.1,
+  thres_uniq_num = 5,
   flag_content_zero = TRUE,
   flag_content_minus = TRUE,
   flag_content_missing = TRUE,
@@ -58,7 +58,7 @@ you needed Chrome web browser on computer.
 Categorical Variables". default is 0.5.}
 
 \item{thres_uniq_num}{numeric. threshold to use for "Unique Values - 
-Numerical Variables". default is 0.1.}
+Numerical Variables". default is 5.}
 
 \item{flag_content_zero}{logical. whether to output "Zero Values" information. 
 the default value is TRUE, and the information is displayed.}
