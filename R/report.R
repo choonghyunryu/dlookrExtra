@@ -229,27 +229,26 @@ diagnose_report <- function(.data, output_file = NULL, output_dir = tempdir(),
 #' Reported from the data diagnosis is as follows.
 #'
 #' \itemize{
-#'   \item Data Diagnosis
+#'   \item Overview
 #'   \itemize{
-#'     \item Overview 
-#'     \itemize{
-#'       \item Missing/Unique Values
-#'     }
-#'     \item Missing Values
-#'     \itemize{
-#'       \item List of Missing Values
-#'       \item Visualization
-#'     }
-#'     \item Unique Values
-#'     \itemize{
-#'       \item Categorical Variables
-#'       \item Numerical Variables
-#'     }
-#'   }
+#'     \item Data Structures 
+#'     \item Warnings
+#'     \item Variables
+#'   } 
+#'   \item Missing Values
+#'   \itemize{
+#'     \item List of Missing Values
+#'     \item Visualization
+#'   } 
+#'   \item Unique Values
+#'   \itemize{
+#'     \item Categorical Variables
+#'     \item Numerical Variables
+#'   } 
 #'   \item Categorical Variable Diagnosis
 #'   \itemize{
-#'     \item Top Ranks
-#'   }   
+#'      \item Top Ranks
+#'   }
 #'   \item Numerical Variable Diagnosis
 #'   \itemize{
 #'     \item Distribution
