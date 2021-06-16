@@ -341,9 +341,6 @@ tab_left <- tab_left %>%
                          ifelse(value / 1024^2 > 0, "memory size (MB)",
                                 "memory size (KB)"), metrics))
 
-cap_left <- "Data Structures"
-cap_right <- "Data Types"
-
 knitr::kables(
   list(
     knitr::kable(tab_left, digits = 2, format = "html", valign = "t",
@@ -354,7 +351,8 @@ knitr::kables(
                  format.args = list(big.mark = ",")) %>% 
       kable_styling(full_width = FALSE, font_size = 15) 
     ),
-  caption = "Data Structures and Types")
+  caption = "Data Structures and Types") %>% 
+  cat()
 
   break_page_asis()
 ```
