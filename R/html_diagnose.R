@@ -366,7 +366,7 @@ html_variable <- function(.data, thres_uniq_cat = 0.5, thres_uniq_num = 5) {
         p_hist <- htmltools::plotTag({
           dlookr::plot_hist_numeric(.data, which(names(.data) == variable))
         }, sprintf("A plot of the %s variable", variable), width = 600, 
-        height = 400)
+        height = 400, device = grDevices::png)
           
         shiny::tabsetPanel(
           shiny::tabPanel("Distribution", p_hist, 
@@ -640,7 +640,7 @@ html_outlier <- function(.data) {
         p_outlier <- htmltools::plotTag({
           dlookr::plot_outlier(.data, variable)
         }, sprintf("A plot of the %s variable", variable), width = 600,
-        height = 400)
+        height = 400, device = grDevices::png)
         
         shiny::tabsetPanel(
           shiny::tabPanel("Distirubution", p_outlier,
