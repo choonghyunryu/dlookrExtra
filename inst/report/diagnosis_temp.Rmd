@@ -115,9 +115,9 @@ diagn_na_unique <- diagnose(reportData)
 diagn_numeric <- diagnose_numeric(reportData)
 
 tab_warning <- data.frame(
-  warnings = character(500), status = character(500), variables = character(500),
-  types = character(500), indicator = numeric(500), ratio = numeric(500), 
-  recommand = character(500), stringsAsFactors = FALSE)
+  warnings = character(5000), status = character(5000), variables = character(5000),
+  types = character(5000), indicator = numeric(5000), ratio = numeric(5000), 
+  recommand = character(5000), stringsAsFactors = FALSE)
 
 # duplicate --------------------------------------------------------------------
 idx_last <- 0
