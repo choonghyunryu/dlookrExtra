@@ -745,7 +745,8 @@ html_paged_unique_cat <- function(tab, thres, n_rows = 25, add_row = 3, caption 
     cap <- sprintf("No variable with a high proportion greater than %s", thres) 
     html_cat(cap)
     
-    break_line_asis(1)
+    # break_line_asis(1)
+    break_page_asis()
   }
 }
 
@@ -851,7 +852,8 @@ html_paged_unique_num <- function(tab, thres, n_rows = 25, add_row = 3,
     cap <- sprintf("No variable with unique data proportion less than %s", thres) 
     html_cat(cap)
     
-    break_line_asis(1)
+    # break_line_asis(1)
+    break_page_asis()
   }
 }
 

@@ -341,7 +341,7 @@ tab_left <- tab_left %>%
                          ifelse(value / 1024^2 > 0, "memory size (MB)",
                                 "memory size (KB)"), metrics))
 
-knitr::kables(
+knitr::kables(format = "html",
   list(
     knitr::kable(tab_left, digits = 2, format = "html", valign = "t",
                  format.args = list(big.mark = ","),
