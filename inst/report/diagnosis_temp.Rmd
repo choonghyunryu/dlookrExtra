@@ -392,7 +392,25 @@ tab_warning %>%
   right_join(data.frame(recommand = c("check", "judgement", "remove")),
              by = "recommand") %>% 
   tidyr::spread(recommand, n) %>% 
+  mutate_all(function(x) ifelse(is.na(x), 0, x)) %>% 
   reactable(
+    columns = list(
+      check = colDef(
+        style = function(value) {
+          list(color = "#007000", fontWeight = "bold")
+        }
+      ),
+      judgement = colDef(
+        style = function(value) {
+          list(color = "#fdb368", fontWeight = "bold")
+        }
+      ),      
+      remove = colDef(
+        style = function(value) {
+          list(color = "#e00000", fontWeight = "bold")
+        }
+      )
+    ),  
     fullWidth = FALSE,
     defaultColDef = colDef(minWidth = 120)
   )
