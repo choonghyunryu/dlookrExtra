@@ -91,13 +91,13 @@ a {
 }
 
 .recommand-judgement {
-  background: hsl(230, 70%, 90%);
+  background: hsl(43, 82%, 68%);
   color: hsl(230, 45%, 30%);
 }
 
 .recommand-remove {
-  background: hsl(350, 70%, 90%);
-  color: hsl(350, 45%, 30%);
+  background: hsl(25, 93%, 63%);
+  color: hsl(176, 93%, 97%);
 }
 ```
 
@@ -383,7 +383,24 @@ break_line_asis(breaks)
 h2("Warnings")
 ```
 
+```{r warnings_summary, results='asis'}
+if (NROW(tab_warning) < 1) {
+  html_cat("No warnings")
+} else {
+tab_warning %>% 
+  count(recommand) %>% 
+  right_join(data.frame(recommand = c("check", "judgement", "remove")),
+             by = "recommand") %>% 
+  tidyr::spread(recommand, n) %>% 
+  reactable(
+    fullWidth = FALSE,
+    defaultColDef = colDef(minWidth = 120)
+  )
+}
+```
+
 ```{r warnings, results='asis'}
+if (NROW(tab_warning) > 0) {
 tab_warning %>% 
   select(warnings, status, recommand) %>% 
   reactable(
@@ -428,6 +445,7 @@ tab_warning %>%
       )  
     )
   )
+}
 
 break_line_asis(2)
 ```
