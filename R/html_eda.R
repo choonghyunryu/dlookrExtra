@@ -45,10 +45,12 @@ html_normality <- function(.data) {
       columns = list(
         balance = colDef(
           name = "Balance",
+          width = 150,
           cell = function(value) normality_indicator(value)
         ),
         variable = colDef(
-          name = "Variables"
+          name = "Variables",
+          width = 130
         ),
         mean = colDef(
           name = "Mean"
@@ -106,7 +108,7 @@ html_normality <- function(.data) {
         } else {
           y <- shapiro.test(x)
           statistic <- round(y$statistic, 5)
-          p_value <- round(y$p.value, 5)
+          p_value <- round(y$p.value, 7)
           
           tab_test <- data.frame(
               Statistic = statistic,

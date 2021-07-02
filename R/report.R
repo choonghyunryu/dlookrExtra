@@ -564,7 +564,7 @@ diagnose_paged_report <- function(.data, output_format = c("pdf", "html"),
 #' @export
 eda_report <- function(.data, target = NULL, output_file = NULL, 
                        output_dir = tempdir(), browse = TRUE, 
-                       title = "Data Diagnosis",
+                       title = "EDA",
                        subtitle = deparse(substitute(.data)), author = "",
                        title_color = "gray", logo_img = NULL, 
                        create_date = format(Sys.Date(),  '%d %B %Y'),
