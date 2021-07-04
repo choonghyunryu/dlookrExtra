@@ -104,13 +104,20 @@ html_toprank <- function(.data, variable = NULL, drop_variable = FALSE) {
       backgroundImage = image,
       backgroundSize = "100% 75%",
       backgroundRepeat = "no-repeat",
-      backgroundPosition = "center"
+      backgroundPosition = "center",
+      fontSize = "14px",
+      color = "#666666"
     )
   }
   
   reactable(top_rank, defaultPageSize = nrow(top_rank),
+            defaultColDef = colDef(style = "font-size: 14px;color: hsl(0, 0%, 40%);"),
             columns = list(
+              levels = colDef(
+                name = "Levels"
+              ),
               freq = colDef(
+                name = "Frequency",
                 style = function(value, index) {
                   bar_style(width = value / max(top_rank$freq), fill = "#ff7f2a66",
                             levels = top_rank$levels[index])
@@ -120,7 +127,8 @@ html_toprank <- function(.data, variable = NULL, drop_variable = FALSE) {
               ),
               ratio = colDef(name = "Percent", 
                              format = colFormat(percent = TRUE, digits = 1))  
-            )) 
+            ),
+            ) 
 }
 
 
