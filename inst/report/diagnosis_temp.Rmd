@@ -394,6 +394,8 @@ tab_warning %>%
   tidyr::spread(recommand, n) %>% 
   mutate_all(function(x) ifelse(is.na(x), 0, x)) %>% 
   reactable(
+    defaultColDef = colDef(style = "font-size: 14px;color: hsl(0, 0%, 40%);",
+                           minWidth = 120),
     columns = list(
       check = colDef(
         style = function(value) {
@@ -411,8 +413,7 @@ tab_warning %>%
         }
       )
     ),  
-    fullWidth = FALSE,
-    defaultColDef = colDef(minWidth = 120)
+    fullWidth = FALSE
   )
 }
 ```
@@ -422,6 +423,7 @@ if (NROW(tab_warning) > 0) {
 tab_warning %>% 
   select(warnings, status, recommand) %>% 
   reactable(
+    defaultColDef = colDef(style = "font-size: 14px;color: hsl(0, 0%, 40%);"),
     columns = list(
       warnings = colDef(
         cell = function(value, index) {
@@ -578,7 +580,8 @@ idx_dup <- attr(ov, "duplicated")
 if (length(idx_dup)) {
   tabs <- reportData[idx_dup, ] %>%
   reactable::reactable(
-    defaultColDef = colDef(minWidth = 150)
+    defaultColDef = colDef(style = "font-size: 14px;color: hsl(0, 0%, 40%);",
+                           minWidth = 150)
   )
 
   htmlwidgets::prependContent(
@@ -604,7 +607,8 @@ h2("Heads")
 tabs <- reportData %>% 
   head(10) %>% 
   reactable::reactable(
-    defaultColDef = colDef(minWidth = 150)
+    defaultColDef = colDef(style = "font-size: 14px;color: hsl(0, 0%, 40%);",
+                           minWidth = 150)
   )
 
 htmlwidgets::prependContent(tabs, 
@@ -624,7 +628,8 @@ h2("Tails")
 tabs <- reportData %>% 
   tail(10) %>% 
   reactable::reactable(
-    defaultColDef = colDef(minWidth = 150)
+    defaultColDef = colDef(style = "font-size: 14px;color: hsl(0, 0%, 40%);",
+                           minWidth = 150)
   )
 
 htmlwidgets::prependContent(tabs, 

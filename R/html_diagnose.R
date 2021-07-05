@@ -249,6 +249,7 @@ html_variable <- function(.data, thres_uniq_cat = 0.5, thres_uniq_num = 5) {
   reactable(
     tabs,
     # defaultPageSize = nrow(tabs),
+    defaultColDef = colDef(style = "font-size: 14px;color: hsl(0, 0%, 40%);"),
     columns = list(
       # variables = colDef(
       #   cell = function(value) a(name = value, value)
@@ -305,6 +306,7 @@ html_variable <- function(.data, thres_uniq_cat = 0.5, thres_uniq_num = 5) {
         arrange(metric) %>% 
         reactable(
           fullWidth = FALSE,
+          defaultColDef = colDef(style = "font-size: 14px;color: hsl(0, 0%, 40%);"),
           columns = list(
             count = colDef(name = "Frequency", 
                            format = colFormat(separators = TRUE)),
@@ -337,6 +339,7 @@ html_variable <- function(.data, thres_uniq_cat = 0.5, thres_uniq_num = 5) {
 
         stat_char <- stat_char %>% 
           reactable(fullWidth = FALSE,
+                    defaultColDef = colDef(style = "font-size: 14px;color: hsl(0, 0%, 40%);"),
                     columns = list(Class = colDef(width = 150))
           )          
         
@@ -369,7 +372,8 @@ html_variable <- function(.data, thres_uniq_cat = 0.5, thres_uniq_num = 5) {
           filter(variables %in% variable) %>%           
           select(min:max) %>% 
           mutate(mean = round(mean, 3)) %>% 
-          reactable(fullWidth = FALSE)
+          reactable(fullWidth = FALSE,
+                    defaultColDef = colDef(style = "font-size: 14px;color: hsl(0, 0%, 40%);"))
 
         p_hist <- htmltools::plotTag({
           dlookr::plot_hist_numeric(.data, which(names(.data) == variable))
@@ -476,7 +480,8 @@ html_missing <- function(tab, grade = c("Good" = 0.05, "OK" = 0.1,
     
     #c("#D9EF8B", "#FEE08B", "#FDAE61", "#F46D43", "#D73027")  
     reactable(
-      diagn_missing, 
+      diagn_missing,
+      defaultColDef = colDef(style = "font-size: 14px;color: hsl(0, 0%, 40%);"),
       columns = list(
         missing_count = colDef(name = "missing",
                                width = 120,
@@ -601,6 +606,7 @@ html_outlier <- function(.data) {
   tabs %>% 
     reactable(
       # defaultPageSize = nrow(tabs),
+      defaultColDef = colDef(style = "font-size: 14px;color: hsl(0, 0%, 40%);"),
       columns = list(
         rate_outlier = colDef(name = "outliers (%)",
                               format = colFormat(percent = TRUE, digits = 1)),
@@ -640,6 +646,7 @@ html_outlier <- function(.data) {
         
         outlier_df <- outlier_df %>% 
           reactable(fullWidth = FALSE,
+                    defaultColDef = colDef(style = "font-size: 14px;color: hsl(0, 0%, 40%);"),
                     columns = list(
                       Measures = colDef(width = 200),
                       Values = colDef(align = "right")
@@ -690,7 +697,8 @@ html_unique_cat <- function(tab, thres) {
     html_cat(cap)
     
     reactable(
-      diagn_uniq_cat, 
+      diagn_uniq_cat,
+      defaultColDef = colDef(style = "font-size: 14px;color: hsl(0, 0%, 40%);"),
       columns = list(
         unique_count = colDef(
           name = "unique",
