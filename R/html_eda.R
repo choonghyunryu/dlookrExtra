@@ -353,12 +353,12 @@ html_normality <- function(.data) {
       columns = list(
         balance = colDef(
           name = "Balance",
-          width = 150,
+          width = 145,
           cell = function(value) normality_indicator(value)
         ),
         variable = colDef(
           name = "Variables",
-          width = 130
+          width = 125
         ),
         mean = colDef(
           name = "Mean"
@@ -520,10 +520,10 @@ html_normality <- function(.data) {
           shiny::tabPanel("Distribution", p_normality,
                           hr(style = "border-top: 1px solid black;"),
                           style = "padding-top:5px; padding-bottom:25px;"), 
-          shiny::tabPanel("Normality test", tab_test,
-                          hr(style = "border-top: 1px solid black;"),
-                          style = "padding-top:5px; padding-bottom:25px;"), 
           shiny::tabPanel("Skewness and Kurtosis", stats,
+                          hr(style = "border-top: 1px solid black;"),
+                          style = "padding-top:5px; padding-bottom:25px;"),
+          shiny::tabPanel("Normality test", tab_test,
                           hr(style = "border-top: 1px solid black;"),
                           style = "padding-top:5px; padding-bottom:25px;")
         )
@@ -826,3 +826,420 @@ html_compare_numerical <- function(.data) {
       }  
     )
 }
+
+
+#' @importFrom shiny icon tabsetPanel tabPanel
+#' @importFrom dlookr compare_category find_class
+#' @importFrom purrr map_int
+#' @importFrom htmltools h5
+#' @importFrom hrbrthemes theme_ipsum
+#' @import reactable
+#' @import dplyr
+#' @export
+html_compare_numerical <- function(.data) {
+  idx <- .data %>% 
+    dlookr::find_class("numerical")
+  
+  if (length(idx) < 2) {
+    htmltools::h5("The number of numerical variables is less than 2.")
+  } else {
+    num_compares <-  dlookr::compare_numeric(.data)
+    
+    num_compares$correlation %>% 
+      reactable(
+        columns = list (
+          var1 = colDef(
+            name = "First Variable"
+          ),
+          var2 = colDef(
+            name = "Second Variable"
+          ),
+          coef_corr = colDef(
+            name = "Correlation Coefficient",
+            format = colFormat(
+              digits = 5
+            )
+          )       
+        ),
+        details = function(index) {
+          tab_model <- num_compares$linear[index, ] %>% 
+            select(-logLik, -AIC, -BIC, -deviance, -df.residual, -nobs) %>% 
+            reactable(
+              columns = list(
+                var1 = colDef(
+                  name = "First Variable"
+                ),
+                var2 = colDef(
+                  name = "Second Variable"
+                ),
+                r.squared = colDef(
+                  format = colFormat(
+                    digits = 3
+                  )
+                ),
+                adj.r.squared = colDef(
+                  format = colFormat(
+                    digits = 3
+                  )
+                ),
+                sigma = colDef(
+                  width = 100,
+                  format = colFormat(
+                    digits = 2
+                  )
+                ),
+                statistic = colDef(
+                  width = 100,
+                  format = colFormat(
+                    digits = 4
+                  )
+                ),
+                p.value = colDef(
+                  width = 100,
+                  format = colFormat(
+                    digits = 4
+                  )
+                ),
+                df = colDef(
+                  width = 50
+                )              
+              )
+            )
+          
+          num_compare <- num_compares
+          
+          vars <- attr(num_compare, "combination")[index, ]
+          attr(num_compare, "raw") <- attr(num_compare, "raw")[, vars]
+          attr(num_compare, "combination") <- vars %>% t()
+          
+          p_scatter <- htmltools::plotTag({
+            plot(num_compare)
+          }, sprintf("A plot of the %s variable", vars %>% 
+                       paste(collapse = " vs ")), width = 600,
+          height = 400, device = grDevices::png)
+          
+          shiny::tabsetPanel(
+            shiny::tabPanel("Scatter Plot", p_scatter,
+                            hr(style = "border-top: 1px solid black;"),
+                            style = "padding-top:5px; padding-bottom:25px;"),
+            shiny::tabPanel("Linear Model Summaries", tab_model,
+                            hr(style = "border-top: 1px solid black;"),
+                            style = "padding-top:5px; padding-bottom:25px;")          
+          )        
+        }  
+      )
+  }
+}
+
+
+#' @importFrom dlookr correlate find_class
+#' @importFrom htmltools h5
+#' @importFrom tidyr spread
+#' @import reactable
+#' @import dplyr
+#' @export
+html_correlation <- function(.data) {
+  idx <- .data %>% 
+    dlookr::find_class("numerical")
+  
+  if (length(idx) < 2) {
+    htmltools::h5("The number of numerical variables is less than 2.")
+  } else {
+    mat_corr <- dlookr::correlate(.data) %>% 
+      tidyr::spread(var2, coef_corr)
+    
+    mat_corr %>% 
+      reactable(
+        defaultColDef = colDef(
+          format = colFormat(
+            digits = 3
+          )
+        ),
+        columns = list(
+          var1 = colDef(
+            name = "First Variable",
+            style = list(fontWeight = "bold")
+          )
+        ),
+        columnGroups = list(
+          colGroup(name = "Second Variable", columns = names(mat_corr)[-1])
+        )    
+      )
+  }
+}
+
+
+#' @importFrom shiny icon tabsetPanel tabPanel
+#' @importFrom dlookr target_by relate plot_outlier find_class
+#' @importFrom htmltools h5
+#' @import reactable
+#' @import dplyr
+#' @export
+html_target_numerical <- function(.data, target) {
+  if (is.null(target)) {
+    stop("The target variable is NULL .")    
+  }
+  
+  if (!target %in% names(.data)) {
+    stop("The data does not contain the variable specified for target.")    
+  }  
+  
+  nm_numeric <- .data %>% 
+    dlookr::find_class("numerical", index = FALSE) %>% 
+    setdiff(target)
+  
+  if (length(nm_numeric) < 1) {
+    htmltools::h5("There are no numeric variables except for the target variable.")
+  } else {
+    tab_main <- data.frame(Variable = nm_numeric, target_variable = target)
+    
+    tgt_by <- .data %>% 
+      dlookr::target_by(target)
+      
+    tab_main %>% 
+      reactable(
+        columns = list(
+          target_variable = colDef(
+            name = "Target Variable"
+          )
+        ),
+        details = function(index) {
+          nm_var <- nm_numeric[index]
+          
+          mat <- dlookr::relate(tgt_by, all_of(nm_var)) %>% 
+            select(-p20, -p30, -p40, -p60, -p70, -p80) %>% 
+            select(-variable) %>% 
+            t()
+          
+          colnames(mat) <- mat[1, ] %>%
+            ifelse(. %in% "total", "<Total>", .)
+          mat  <- mat[-1, ] 
+          
+          rownames(mat) <- c("N", "Missing", "Mean", "Standard Deviation", 
+                             "Standard Error Mean", "IQR", "Skewness", 
+                             "Kurtosis", "Min", "1%", "5%", "10%", "25%", 
+                             "50%", "75%", "90%", "95%", "99%", "Max")
+          
+          tab_stat <- mat %>% 
+            reactable(
+              defaultColDef = colDef(
+                align = "right"
+              ),
+              columns = list(
+                .rownames = colDef(
+                  name = "Statistics",
+                  align = "left"
+                )
+              ),
+              columnGroups = list(
+                colGroup(name = target, columns = colnames(mat))
+              ) 
+            )
+          
+          p_box <- htmltools::plotTag({
+            dlookr::plot_outlier(tgt_by, all_of(nm_var))
+          }, sprintf("A plot of the %s and %s variable", target, nm_var), 
+          width = 600, height = 400, device = grDevices::png)
+          
+          
+          
+          shiny::tabsetPanel(
+            shiny::tabPanel("Distribution Plot", p_box,
+                            hr(style = "border-top: 1px solid black;"),
+                            style = "padding-top:5px; padding-bottom:25px;"),
+            shiny::tabPanel("Descriptive Statistics", tab_stat,
+                            hr(style = "border-top: 1px solid black;"),
+                            style = "padding-top:5px; padding-bottom:25px;")          
+          ) 
+        }
+      )
+  }
+}
+
+
+#' @importFrom shiny icon tabsetPanel tabPanel
+#' @importFrom dlookr target_by relate find_class
+#' @importFrom htmltools h5
+#' @import reactable
+#' @import dplyr
+#' @export
+html_target_categorical <- function(.data, target) {
+  if (is.null(target)) {
+    stop("The target variable is NULL .")    
+  }
+  
+  if (!target %in% names(.data)) {
+    stop("The data does not contain the variable specified for target.")    
+  }  
+  
+  nm_categorical <- .data %>% 
+    dlookr::find_class("categorical", index = FALSE) %>% 
+    setdiff(target)
+  
+  if (length(nm_categorical) < 1) {
+    htmltools::h5("There are no nm_categorical variables except for the target variable.")
+  } else {
+    tab_main <- data.frame(Variable = nm_categorical, target_variable = target)
+    
+    tgt_by <- .data %>% 
+      dlookr::target_by(all_of(target))
+    
+    tab_main %>% 
+      reactable(
+        columns = list(
+          target_variable = colDef(
+            name = "Target Variable"
+          )
+        ),
+        details = function(index) {
+          nm_var <- nm_categorical[index]
+          
+          freq <- relate(tgt_by, all_of(nm_var)) %>% 
+            addmargins() %>% 
+            as.data.frame() %>% 
+            tidyr::spread(all_of(target), Freq) 
+          
+          names(freq) <- names(freq) %>% 
+            ifelse(. %in% "Sum", "<Total>", .)
+          freq[, 1] <- freq[, 1] %>% 
+            as.character(.) %>% 
+            ifelse(. %in% "Sum", "<Total>", .)
+          
+          tab_stat <- freq %>% 
+            reactable(
+              defaultColDef = colDef(
+                format = colFormat(separators = TRUE)
+              ),
+              colGroup(name = target, columns = names(freq)[-1])
+            )
+          
+          ratio <- freq
+          ratio[, -1] <- ratio[, -1] / freq[nrow(freq), ncol(freq)]
+          
+          tab_ratio <- ratio %>% 
+            reactable(
+              defaultColDef = colDef(
+                format = colFormat(percent = TRUE,
+                                   digits = 1)
+              ),
+              colGroup(name = target, columns = names(freq)[-1])
+            )          
+          
+          p_mosaics <- htmltools::plotTag({
+            plot(dlookr::relate(tgt_by, all_of(nm_var)))
+          }, sprintf("A plot of the %s and %s variable", target, nm_var), 
+          width = 600, height = 400, device = grDevices::png)
+          
+          shiny::tabsetPanel(
+            shiny::tabPanel("Distribution Plot", p_mosaics,
+                            hr(style = "border-top: 1px solid black;"),
+                            style = "padding-top:5px; padding-bottom:25px;"),
+            shiny::tabPanel("Contingency Table", tab_stat,
+                            hr(style = "border-top: 1px solid black;"),
+                            style = "padding-top:5px; padding-bottom:25px;"),
+            shiny::tabPanel("Relative Contingency Table", tab_ratio,
+                            hr(style = "border-top: 1px solid black;"),
+                            style = "padding-top:5px; padding-bottom:25px;")            
+          ) 
+        }
+      )
+  }
+}
+
+
+#' @importFrom shiny icon tabsetPanel tabPanel
+#' @importFrom dlookr plot_correlate correlate find_class
+#' @importFrom htmltools h5 plotTag
+#' @importFrom tidyr spread
+#' @import reactable
+#' @import dplyr
+#' @export
+html_target_correlation <- function(.data, target) {
+  if (is.null(target)) {
+    stop("The target variable is NULL .")    
+  }
+  
+  if (!target %in% names(.data)) {
+    stop("The data does not contain the variable specified for target.")    
+  }  
+  
+  nm_numeric <- .data %>% 
+    dlookr::find_class("numerical", index = FALSE) %>% 
+    setdiff(target)
+  
+  if (length(nm_numeric) < 2) {
+    htmltools::h5("The number of numerical variables is less than 2.")
+  } else {
+    tab_main <- .data %>% 
+      group_by_at(all_of(target)) %>% 
+      tally() %>% 
+      mutate(ratio = n / sum(n))
+    
+    tab_main %>% 
+      reactable(
+        columns = list(
+          n = colDef(
+            name = "N",
+            format = colFormat(
+              separators = TRUE
+            )
+          ),          
+          ratio = colDef(
+            name = "Percent",
+            format = colFormat(
+              percent = TRUE,
+              digits = 2
+            )
+          )          
+        ),
+        details = function(index) {
+          value <- tab_main[1, target] %>% 
+            pull() %>% 
+            as.character()
+          
+          target2 <- paste0("^", target, "$")
+          
+          data_filterd <- .data %>% 
+            filter_at(vars(matches(target2)), 
+                      any_vars(. %in% value))
+          
+          mat_corr <- data_filterd %>% 
+            dlookr::correlate() %>% 
+            tidyr::spread(var2, coef_corr)
+          
+          mat_corr <- mat_corr %>% 
+            reactable(
+              defaultColDef = colDef(
+                format = colFormat(
+                  digits = 3
+                )
+              ),
+              columns = list(
+                var1 = colDef(
+                  name = "First Variable",
+                  style = list(fontWeight = "bold")
+                )
+              ),
+              columnGroups = list(
+                colGroup(name = "Second Variable", columns = names(mat_corr)[-1])
+              )    
+            )
+
+          p_corr <- htmltools::plotTag({
+            dlookr::plot_correlate(data_filterd)
+          }, sprintf("A plot of the variable %s == %s", target, value), 
+          width = 600, height = 500, device = grDevices::png)
+          
+          shiny::tabsetPanel(
+            shiny::tabPanel("Correlation Matrix", mat_corr,
+                            hr(style = "border-top: 1px solid black;"),
+                            style = "padding-top:5px; padding-bottom:25px;"),
+            shiny::tabPanel("Correlation Plot", p_corr,
+                            hr(style = "border-top: 1px solid black;"),
+                            style = "padding-top:5px; padding-bottom:25px;")            
+          ) 
+        }        
+      )
+  }
+}
+
