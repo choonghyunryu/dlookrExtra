@@ -310,20 +310,23 @@ html_descriptive <- function(.data) {
 #' @import dplyr
 #' @import htmltools
 #' @export
-html_normality <- function(.data) {
-  normality_indicator <- function(value) {
+html_normality <- function(.data, theme = c("orange", "blue")[1]) {
+  normality_indicator <- function(value, theme) {
+    style <- ifelse(theme == "orange", "color: rgb(255, 127, 42)", 
+                    "color: rgb(0, 114, 188)")
+    
     if (value %in% "Balanced") {
       args <- shiny::icon("balance-scale", 
-                          style = "color: rgb(255, 127, 42)")
+                          style = style)
     } else if (value %in% "Right-Skewed") {
       args <- shiny::icon("balance-scale-left", 
-                          style = "color: rgb(255, 127, 42)")
+                          style = style)
     } else if (value %in% "Left-Skewed") {
       args <- shiny::icon("balance-scale-right", 
-                          style = "color: rgb(255, 127, 42)")
+                          style = style)
     } else if (value %in% "Invalid") {
       args <- shiny::icon("exclamation-triangle", 
-                          style = "color: rgb(255, 127, 42)")
+                          style = style)
     } 
     
     div(args, paste("", value))
@@ -354,7 +357,7 @@ html_normality <- function(.data) {
         balance = colDef(
           name = "Balance",
           width = 145,
-          cell = function(value) normality_indicator(value)
+          cell = function(value) normality_indicator(value, theme)
         ),
         variable = colDef(
           name = "Variables",
@@ -632,6 +635,7 @@ html_compare_category <- function(.data, n_cells = 20, n_levels = 10) {
   tab_compare %>% 
     select(1, 2, 5, 3, 4) %>% 
     reactable(
+      defaultColDef = colDef(style = "font-size: 14px;color: hsl(0, 0%, 40%);"),
       columns = list (
         variable_1 = colDef(
           name = "First Variable"
@@ -744,6 +748,7 @@ html_compare_numerical <- function(.data) {
   
   num_compares$correlation %>% 
     reactable(
+      defaultColDef = colDef(style = "font-size: 14px;color: hsl(0, 0%, 40%);"),
       columns = list (
         var1 = colDef(
           name = "First Variable"
@@ -847,6 +852,7 @@ html_compare_numerical <- function(.data) {
     
     num_compares$correlation %>% 
       reactable(
+        defaultColDef = colDef(style = "font-size: 14px;color: hsl(0, 0%, 40%);"),
         columns = list (
           var1 = colDef(
             name = "First Variable"
@@ -951,6 +957,7 @@ html_correlation <- function(.data) {
     mat_corr %>% 
       reactable(
         defaultColDef = colDef(
+          style = "font-size: 14px;color: hsl(0, 0%, 40%);",
           format = colFormat(
             digits = 3
           )
@@ -991,13 +998,17 @@ html_target_numerical <- function(.data, target) {
   if (length(nm_numeric) < 1) {
     htmltools::h5("There are no numeric variables except for the target variable.")
   } else {
-    tab_main <- data.frame(Variable = nm_numeric, target_variable = target)
+    suppressWarnings({
+      tab_main <- data.frame(Variable = nm_numeric, target_variable = target)
+    })
+    
     
     tgt_by <- .data %>% 
       dlookr::target_by(target)
       
     tab_main %>% 
       reactable(
+        defaultColDef = colDef(style = "font-size: 14px;color: hsl(0, 0%, 40%);"),
         columns = list(
           target_variable = colDef(
             name = "Target Variable"
@@ -1079,13 +1090,16 @@ html_target_categorical <- function(.data, target) {
   if (length(nm_categorical) < 1) {
     htmltools::h5("There are no nm_categorical variables except for the target variable.")
   } else {
-    tab_main <- data.frame(Variable = nm_categorical, target_variable = target)
+    suppressWarnings({
+      tab_main <- data.frame(Variable = nm_categorical, target_variable = target)
+    })
     
     tgt_by <- .data %>% 
       dlookr::target_by(all_of(target))
     
     tab_main %>% 
       reactable(
+        defaultColDef = colDef(style = "font-size: 14px;color: hsl(0, 0%, 40%);"),
         columns = list(
           target_variable = colDef(
             name = "Target Variable"
@@ -1177,6 +1191,7 @@ html_target_correlation <- function(.data, target) {
     
     tab_main %>% 
       reactable(
+        defaultColDef = colDef(style = "font-size: 14px;color: hsl(0, 0%, 40%);"),
         columns = list(
           n = colDef(
             name = "N",
@@ -1242,4 +1257,5 @@ html_target_correlation <- function(.data, target) {
       )
   }
 }
+
 

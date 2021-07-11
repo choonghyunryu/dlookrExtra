@@ -231,7 +231,8 @@ th {
   h3 {
     page-break-after: avoid; }
   .navbar {
-    display: none; }
+    display: none;
+  }
   .btn > .caret,
   .dropup > .btn > .caret {
     border-top-color: #000 !important; }
@@ -2957,7 +2958,7 @@ tbody.collapse.in {
 
 .navbar-fixed-top {
   top: 0;
-  border-width: 0 0 1px; }
+  border-width: 0 0 3px; }
 
 .navbar-fixed-bottom {
   bottom: 0;
@@ -5085,12 +5086,12 @@ h1::before, h2::before, h3::before, h4::before, h5::before, h6::before {
 
 #header .title{
   float: left;
-  font-size: 36px;
+  font-size: 32px;
   font-weight: 100;
   letter-spacing: .8px;
   /*line-height: 40px;*/
   padding-left: 10px;
-  text-transform: uppercase;
+  /*text-transform: uppercase;*/
   /*padding-top: 27px;*/
   color: #000000;
 }
@@ -5102,7 +5103,7 @@ h1::before, h2::before, h3::before, h4::before, h5::before, h6::before {
     letter-spacing: .8px;
     line-height: 20px;
     padding-left: 10px;
-    text-transform: uppercase;
+    /*text-transform: uppercase;*/
     padding-top: 9px;
 }
 #header .titlesmall>a {
@@ -5311,10 +5312,10 @@ padding-top:0;
 #header .navbar{
   /*width: 100%;*/
   margin-bottom: 0;
-    border-bottom: none;
+  /*border-bottom: none;*/
 }
 #header .navbar-nav {
-    text-transform: uppercase;
+  text-transform: uppercase;
   /*letter-spacing: 1.5px;*/
   font-size: 15px;
   font-weight: 500;
@@ -5377,7 +5378,7 @@ padding-top:0;
     float: right; } }
 .hdr--utility .utility ul li {
   display: block;
-  font-size: 0.9em; /*1em*/
+  font-size: 1.2em; /*1em*/
   height: auto;
   float: none;
   padding: 0 0 6px; }
@@ -5387,7 +5388,7 @@ padding-top:0;
   clear: both; }
 @media all and (min-width: 55.625em) {
   .hdr--utility .utility ul li {
-    font-size: 11px;
+    font-size: 13px;
     margin: 0 0 0 10px;
     padding: 0;
     background-color: transparent;

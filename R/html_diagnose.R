@@ -12,29 +12,32 @@ html_cat <- function(msg, id = paste0("ID", runif(1))) {
 #' @importFrom shiny icon
 #' @importFrom htmltools div
 #' @export
-unique_indicator <- function(value, word = FALSE) {
+unique_indicator <- function(value, word = FALSE, theme = c("orange", "blue")[1]) {
+  style <- ifelse(theme == "orange", "color: rgb(255, 127, 42)", 
+                  "color: rgb(0, 114, 188)")
+  
   if (value %in% "identifier") {
-    args <- shiny::icon("key", style = "color: rgb(255, 127, 42)")
+    args <- shiny::icon("key", style = style)
     
     div(args, paste("", value))    
   } else if (value %in% "constant") {
-    args <- shiny::icon("thumbtack", style = "color: rgb(255, 127, 42)")
+    args <- shiny::icon("thumbtack", style = style)
     
     div(args, paste("", value))
   } else if (value %in% "high cardinality") {
     if (word) value <- "high"
-    args <- shiny::icon("greater-than", style = "color: rgb(255, 127, 42)")
+    args <- shiny::icon("greater-than", style = style)
     
     div(args, paste("", value))
   } else if (value %in% "low cardinality") {
     if (word) value <- "low"
-    args <- shiny::icon("less-than", style = "color: rgb(255, 127, 42)")
+    args <- shiny::icon("less-than", style = style)
     
     div(args, paste("", value))
   } else {
     args <- list(role = "img")
     args <- c(args, list(shiny::icon("check"), 
-                         style = "color: rgb(0, 114, 188)"))    
+                         style = style))    
     do.call(span, args)    
   }
 }
@@ -200,7 +203,11 @@ html_paged_toprank <- function(.data, top = 10, type = "n", variable = NULL,
 #' @import reactable
 #' @importFrom dlookr diagnose diagnose_numeric plot_bar_category plot_box_numeric
 #' @export
-html_variable <- function(.data, thres_uniq_cat = 0.5, thres_uniq_num = 5) {
+html_variable <- function(.data, thres_uniq_cat = 0.5, thres_uniq_num = 5,
+                          theme = c("orange", "blue")[1]) {
+  style <- ifelse(theme == "orange", "color: rgb(255, 127, 42)", 
+                  "color: rgb(0, 114, 188)")
+  
   alert_indicator <- function(value) {
     args <- list(role = "img")
     
@@ -208,9 +215,9 @@ html_variable <- function(.data, thres_uniq_cat = 0.5, thres_uniq_num = 5) {
       args <- c(args, list("–", style = "color: #666; font-weight: 700"))
     } else if (value == 1) {
       args <- c(args, list(shiny::icon("exclamation-triangle"), 
-                           style = "color: rgb(255, 127, 42)"))
+                           style = style))
     } else if (value == 0) {
-      args <- c(args, list(shiny::icon("check"), style = "color: rgb(0, 114, 188)"))
+      args <- c(args, list(shiny::icon("check"), style = style))
     } 
     
     do.call(span, args)
@@ -265,7 +272,7 @@ html_variable <- function(.data, thres_uniq_cat = 0.5, thres_uniq_num = 5) {
       cardinality = colDef(
         align = "center",
         width = 120,
-        cell = function(value) unique_indicator(value, TRUE)
+        cell = function(value) unique_indicator(value, TRUE, theme)
       ),
       zero = colDef(
         align = "center",
@@ -554,17 +561,17 @@ html_paged_missing <- function(tab, grade = c("Good" = 0.05, "OK" = 0.1,
 #' @import dplyr
 #' @import htmltools
 #' @export
-html_outlier <- function(.data) {
+html_outlier <- function(.data, theme = c("orange", "blue")[1]) {
+  style <- ifelse(theme == "orange", "color: rgb(255, 127, 42)", 
+                  "color: rgb(0, 114, 188)")
+  
   outlier_indicator <- function(value) {
     if (value %in% "Both") {
-      args <- shiny::icon("arrows-alt-v", 
-                          style = "color: rgb(255, 127, 42)")
+      args <- shiny::icon("arrows-alt-v", style = style)
     } else if (value %in% "Lower") {
-      args <- shiny::icon("arrow-alt-circle-down", 
-                          style = "color: rgb(255, 127, 42)")
+      args <- shiny::icon("arrow-alt-circle-down", style = style)
     } else if (value %in% "Upper") {
-      args <- shiny::icon("arrow-alt-circle-up", 
-                          style = "color: rgb(255, 127, 42)")
+      args <- shiny::icon("arrow-alt-circle-up", style = style)
     } 
     
     div(args, paste("", value))

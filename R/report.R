@@ -57,7 +57,7 @@
 #' @param browse logical. choose whether to output the report results to the browser.
 #' @param title character. title of report. default is "Data Diagnosis Report".
 #' @param subtitle character. subtitle of report. default is name of data.
-#' @param author character. author of report. default is "".
+#' @param author character. author of report. default is "dlookr".
 #' @param title_color character. color of title. default is "white".
 #' @param thres_uniq_cat numeric. threshold to use for "Unique Values - 
 #' Categorical Variables". default is 0.5.
@@ -66,9 +66,9 @@
 #' @param logo_img character. name of logo image on top right.
 #' @param theme character. name of theme for report. support "orange" and "blue". 
 #' default is "orange".
-#' @param sample numeric. ratio of the sample. It takes a real number 
-#' between (0, 1) as an argument value. The default value is 1, and all data 
-#' is diagnosed.
+#' @param sample_percent numeric. Sample percent of data for performing Diagnosis. 
+#' It has a value between (0, 100]. 100 means all data, and 5 means 5% of sample data.
+#' This is useful for data with a large number of observations.
 #' @param ... arguments to be passed to methods.
 #'
 #' @examples
@@ -91,21 +91,16 @@
 #' @export
 diagnose_report <- function(.data, output_file = NULL, output_dir = tempdir(),   
                             browse = TRUE, title = "Data Diagnosis",
-                            subtitle = deparse(substitute(.data)), author = "",
+                            subtitle = deparse(substitute(.data)), author = "dlookr",
                             title_color = "gray", thres_uniq_cat = 0.5, 
                             thres_uniq_num = 5, logo_img = NULL, 
-                            create_date = format(Sys.Date(),  '%d %B %Y'),
+                            create_date = Sys.time(),
                             theme = c("orange", "blue")[1], 
-                            sample = 1, ...) {
-  if (sample > 0 & sample < 1) {
-    N <- nrow(.data)
-    idx <- sample(seq(N), round(N * sample))
-    
-    assign("reportData", as.data.frame(.data[idx, ]), .dlookrExtraEnv)
-  } else {
-    assign("reportData", as.data.frame(.data), .dlookrExtraEnv)
-  }
-
+                            sample_percent = 100, ...) {
+  assign("reportData", as.data.frame(.data), .dlookrExtraEnv)
+  assign("thres_uniq_cat", thres_uniq_cat, .dlookrExtraEnv)  
+  assign("thres_uniq_num", thres_uniq_num, .dlookrExtraEnv) 
+  assign("author", author, .dlookrExtraEnv)  
   
   path <- output_dir
   
@@ -128,23 +123,27 @@ diagnose_report <- function(.data, output_file = NULL, output_dir = tempdir(),
   
   #--Store parameters ----------------------------------------------------------  
   # store theme
+  rmd_content <- gsub("\\$theme\\$", theme, 
+                      readLines(paste(path, rmd, sep = "/")))
+  cat(rmd_content, file = paste(path, rmd, sep = "/"), sep = "\n")
+  
   if (theme == "orange") {
-    rmd_content <- gsub("\\$navbar\\$", "var(--custom-lightorange)", 
+    rmd_content <- gsub("\\$customLightColor\\$", "var(--custom-lightorange)", 
                         readLines(paste(path, rmd, sep = "/")))
     cat(rmd_content, file = paste(path, rmd, sep = "/"), sep = "\n")
     
-    rmd_content <- gsub("\\$listgitem\\$", "var(--custom-orange)", 
+    rmd_content <- gsub("\\$customColor\\$", "var(--custom-orange)", 
                         readLines(paste(path, rmd, sep = "/")))
     cat(rmd_content, file = paste(path, rmd, sep = "/"), sep = "\n")    
   } else if (theme == "blue") {
-    rmd_content <- gsub("\\$navbar\\$", "var(--custom-lightblue)", 
+    rmd_content <- gsub("\\$customLightColor\\$", "var(--custom-lightblue)", 
                         readLines(paste(path, rmd, sep = "/")))
     cat(rmd_content, file = paste(path, rmd, sep = "/"), sep = "\n")
     
-    rmd_content <- gsub("\\$listgitem\\$", "var(--custom-blue)", 
+    rmd_content <- gsub("\\$customColor\\$", "var(--custom-blue)", 
                         readLines(paste(path, rmd, sep = "/")))
     cat(rmd_content, file = paste(path, rmd, sep = "/"), sep = "\n")        
-  }  
+  }   
 
   # store title
   header_content <- sub("\\$title\\$", title, readLines(paste(path, header, sep = "/")))
@@ -158,36 +157,24 @@ diagnose_report <- function(.data, output_file = NULL, output_dir = tempdir(),
   rmd_content <- sub("\\$title_color\\$", title_color, readLines(paste(path, rmd, sep = "/")))
   cat(rmd_content, file = paste(path, rmd, sep = "/"), sep = "\n")
   
-  # store author
-  if (author != "") {
-    author <- paste(" Creat by :", author)
-  }
-  header_content <- sub("\\$author\\$", author, readLines(paste(path, header, sep = "/")))
+  # store the menus
+  menus <- "<li><a href=\"#ID-h1-overview\">Overview</a></li>
+            <li><a href=\"#ID-h1-missing\">Missing Values</a></li>	
+            <li><a href=\"#ID-h1-uniq-value\">Unique Values</a></li>	
+            <li><a href=\"#ID-h1-outlier\">Outliers</a></li>
+            <li><a href=\"#ID-h1-sample\">Samples</a></li>"
+  header_content <- sub("\\$menu\\$", menus, readLines(paste(path, header, sep = "/")))
   cat(header_content, file = paste(path, header, sep = "/"), sep = "\n")
   
-  # store sample
-  if (sample > 0  & sample < 1) {
-    sample <- sprintf("Used samples [%s / %s] ", length(idx), N)
-  } else {
-    sample <- ""
-  }
-  header_content <- sub("\\$sample\\$", sample, readLines(paste(path, header, sep = "/")))
-  cat(header_content, file = paste(path, header, sep = "/"), sep = "\n")
-  
-  # store threshold that is unique ratio for categorical
-  rmd_content <- sub("\\$thres_uniq_cat\\$", thres_uniq_cat, 
+  # store dataset
+  rmd_content <- sub("\\$dataset\\$", deparse(substitute(.data)), 
                      readLines(paste(path, rmd, sep = "/")))
-  cat(rmd_content, file = paste(path, rmd, sep = "/"), sep = "\n") 
-  
-  # store threshold that is unique ratio for numerical
-  rmd_content <- sub("\\$thres_uniq_num\\$", thres_uniq_num, 
-                     readLines(paste(path, rmd, sep = "/")))
-  cat(rmd_content, file = paste(path, rmd, sep = "/"), sep = "\n") 
+  cat(rmd_content, file = paste(path, rmd, sep = "/"), sep = "\n")   
   
   # store created date
-  header_content <- sub("\\$date\\$", create_date, 
-                     readLines(paste(path, header, sep = "/")))
-  cat(header_content, file = paste(path, header, sep = "/"), sep = "\n")   
+  rmd_content <- sub("\\$date\\$", create_date, 
+                     readLines(paste(path, rmd, sep = "/")))
+  cat(rmd_content, file = paste(path, rmd, sep = "/"), sep = "\n")    
   
   # store logo image
   if (is.null(logo_img)) {
@@ -533,7 +520,7 @@ diagnose_paged_report <- function(.data, output_format = c("pdf", "html"),
 #' @param browse logical. choose whether to output the report results to the browser.
 #' @param title character. title of report. default is "Data Diagnosis Report".
 #' @param subtitle character. subtitle of report. default is name of data.
-#' @param author character. author of report. default is "".
+#' @param author character. author of report. default is "dlookr".
 #' @param title_color character. color of title. default is "white".
 #' @param thres_uniq_cat numeric. threshold to use for "Unique Values - 
 #' Categorical Variables". default is 0.5.
@@ -542,6 +529,9 @@ diagnose_paged_report <- function(.data, output_format = c("pdf", "html"),
 #' @param logo_img character. name of logo image on top right.
 #' @param theme character. name of theme for report. support "orange" and "blue". 
 #' default is "orange".
+#' @param sample_percent numeric. Sample percent of data for performing EDA. 
+#' It has a value between (0, 100]. 100 means all data, and 5 means 5% of sample data.
+#' This is useful for data with a large number of observations.
 #' @param ... arguments to be passed to methods.
 #'
 #' @examples
@@ -564,11 +554,10 @@ diagnose_paged_report <- function(.data, output_format = c("pdf", "html"),
 #' @export
 eda_report <- function(.data, target = NULL, output_file = NULL, 
                        output_dir = tempdir(), browse = TRUE, 
-                       title = "EDA",
-                       subtitle = deparse(substitute(.data)), author = "",
-                       title_color = "gray", logo_img = NULL, 
-                       create_date = format(Sys.Date(),  '%d %B %Y'),
-                       theme = c("orange", "blue")[1], ...) {
+                       title = "EDA", subtitle = deparse(substitute(.data)), 
+                       author = "dlookr", title_color = "gray", logo_img = NULL, 
+                       create_date = Sys.time(), theme = c("orange", "blue")[1], 
+                       sample_percent = 100, ...) {
   tryCatch(vars <- tidyselect::vars_select(names(.data),
                                            !! rlang::enquo(target)),
            error = function(e) {
@@ -577,8 +566,13 @@ eda_report <- function(.data, target = NULL, output_file = NULL,
            },
            finally = NULL)
 
+  if (sample_percent > 100 | sample_percent <= 0) {
+    stop("sample_percent must be a value between (0, 100].")
+  }
   assign("reportData", as.data.frame(.data), .dlookrExtraEnv)
   assign("targetVariable", vars, .dlookrExtraEnv)
+  assign("sample_percent", sample_percent, .dlookrExtraEnv)  
+  assign("author", author, .dlookrExtraEnv)  
   
   path <- output_dir
   
@@ -601,20 +595,24 @@ eda_report <- function(.data, target = NULL, output_file = NULL,
   
   #--Store parameters ----------------------------------------------------------  
   # store theme
+  rmd_content <- gsub("\\$theme\\$", theme, 
+                      readLines(paste(path, rmd, sep = "/")))
+  cat(rmd_content, file = paste(path, rmd, sep = "/"), sep = "\n")
+  
   if (theme == "orange") {
-    rmd_content <- gsub("\\$navbar\\$", "var(--custom-lightorange)", 
+    rmd_content <- gsub("\\$customLightColor\\$", "var(--custom-lightorange)", 
                         readLines(paste(path, rmd, sep = "/")))
     cat(rmd_content, file = paste(path, rmd, sep = "/"), sep = "\n")
     
-    rmd_content <- gsub("\\$listgitem\\$", "var(--custom-orange)", 
+    rmd_content <- gsub("\\$customColor\\$", "var(--custom-orange)", 
                         readLines(paste(path, rmd, sep = "/")))
     cat(rmd_content, file = paste(path, rmd, sep = "/"), sep = "\n")    
   } else if (theme == "blue") {
-    rmd_content <- gsub("\\$navbar\\$", "var(--custom-lightblue)", 
+    rmd_content <- gsub("\\$customLightColor\\$", "var(--custom-lightblue)", 
                         readLines(paste(path, rmd, sep = "/")))
     cat(rmd_content, file = paste(path, rmd, sep = "/"), sep = "\n")
     
-    rmd_content <- gsub("\\$listgitem\\$", "var(--custom-blue)", 
+    rmd_content <- gsub("\\$customColor\\$", "var(--custom-blue)", 
                         readLines(paste(path, rmd, sep = "/")))
     cat(rmd_content, file = paste(path, rmd, sep = "/"), sep = "\n")        
   }  
@@ -631,17 +629,30 @@ eda_report <- function(.data, target = NULL, output_file = NULL,
   rmd_content <- sub("\\$title_color\\$", title_color, readLines(paste(path, rmd, sep = "/")))
   cat(rmd_content, file = paste(path, rmd, sep = "/"), sep = "\n")
   
-  # store author
-  if (author != "") {
-    author <- paste("Creat by :", author)
-  }
-  header_content <- sub("\\$author\\$", author, readLines(paste(path, header, sep = "/")))
+  # store the menus
+  disabled <- ifelse(is.null(target), 
+                     "<li><a href=\"#ID-h1-overview\">Overview</a></li>
+                      <li><a href=\"#ID-h1-univariate\">Univariate Analysis</a></li>	
+                      <li><a href=\"#ID-h1-bivariate\">Bivariate Analysis</a></li>	
+                      <li><a href=\"#ID-h1-multivariate\">Multivariate Analysis</a></li>
+                      <li><a href=\"#\" class=\"disable-links\">Target based Analysis</a></li>",
+                     "<li><a href=\"#ID-h1-overview\">Overview</a></li>
+                      <li><a href=\"#ID-h1-univariate\">Univariate Analysis</a></li>	
+                      <li><a href=\"#ID-h1-bivariate\">Bivariate Analysis</a></li>	
+                      <li><a href=\"#ID-h1-multivariate\">Multivariate Analysis</a></li>
+                      <li><a href=\"#ID-h1-target-based\">Target based Analysis</a></li>")
+  header_content <- sub("\\$menu\\$", disabled, readLines(paste(path, header, sep = "/")))
   cat(header_content, file = paste(path, header, sep = "/"), sep = "\n")
+
+  # store dataset
+  rmd_content <- sub("\\$dataset\\$", deparse(substitute(.data)), 
+                     readLines(paste(path, rmd, sep = "/")))
+  cat(rmd_content, file = paste(path, rmd, sep = "/"), sep = "\n")   
   
   # store created date
-  header_content <- sub("\\$date\\$", create_date, 
-                        readLines(paste(path, header, sep = "/")))
-  cat(header_content, file = paste(path, header, sep = "/"), sep = "\n")   
+  rmd_content <- sub("\\$date\\$", create_date, 
+                        readLines(paste(path, rmd, sep = "/")))
+  cat(rmd_content, file = paste(path, rmd, sep = "/"), sep = "\n")   
   
   # store logo image
   if (is.null(logo_img)) {
@@ -654,7 +665,7 @@ eda_report <- function(.data, target = NULL, output_file = NULL,
                         readLines(paste(path, header, sep = "/")))
   cat(header_content, file = paste(path, header, sep = "/"), sep = "\n")
   
-  # rendering
+  #--Rendering------------------------------------------------------------------    
   rmarkdown::render(paste(path, rmd, sep = "/"), output_file = output_file)
   
   file.remove(paste(path, rmd, sep = "/"))

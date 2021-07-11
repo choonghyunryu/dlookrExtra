@@ -1,0 +1,393 @@
+---
+title: "dlookr: EDA"
+author: ""
+always_allow_html: yes
+output:
+  dlookrExtra::dlookrExtra_templ_html:
+    toc: false
+---
+
+```{r setup, echo=FALSE, warning=FALSE, message=FALSE}
+knitr::opts_chunk$set(echo = FALSE, 
+                      message = FALSE, 
+                      warning = FALSE, 
+                      collapse = FALSE,
+                      comment = "#>",
+                      fig.align = "center")
+knitr::opts_chunk$set(fig.width = 12, fig.height = 9)
+```
+
+```{r load_packages}
+library(dlookr)
+library(dlookrExtra)
+library(dplyr)
+```
+
+```{css, echo=FALSE}
+:root {
+  --custom-grey60: rgb(102, 102, 102);
+  --custom-grey20: rgb(204, 204, 204);
+  --custom-grey10: rgb(230, 230, 230);
+  --custom-blue: rgb(0, 114, 188);
+  --custom-lightblue: rgb(204, 227, 242);
+  --custom-orange: rgb(255, 127, 42); 
+  --custom-lightorange: rgb(255, 204, 170); 
+}
+
+/* Font from https://fontsarena.com/hanken-grotesk-by-hanken-design-co/ */
+@font-face {
+  font-family: 'Hanken Grotesk';
+  font-style: normal;
+  font-weight: 400;
+  src: url("fonts/HKGrotesk-Regular.woff2") format("woff2"),
+       url("fonts/HKGrotesk-Regular.woff") format("woff");
+}
+
+@font-face {
+  font-family: 'Hanken Grotesk';
+  font-style: normal;
+  font-weight: 600;
+  src: url("fonts/HKGrotesk-SemiBold.woff2") format("woff2"),
+       url("fonts/HKGrotesk-SemiBold.woff") format("woff");
+}
+
+@font-face {
+  font-family: 'Hanken Grotesk';
+  font-style: normal;
+  font-weight: 700;
+  src: url("fonts/HKGrotesk-Bold.woff2") format("woff2"),
+       url("fonts/HKGrotesk-Bold.woff") format("woff");
+}
+
+#header .title{
+  color: $title_color$;
+}
+
+.navbar {
+    background-color: #f0f0f0;  
+    border-bottom : 2px solid $customColor$ !important;
+}
+
+a {
+    color: #337ab7 !important;
+    background-color: transparent !important;
+    text-decoration: none;
+}
+
+a.disable-links {
+  pointer-events: none;
+  color: var(--custom-grey60) !important;
+}
+
+/* Warnings */
+.tag {
+  display: inline-block;
+  padding: 2px 12px;
+  border-radius: 5px;
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.variables {
+  font-size: 16px;
+  color: hsl(358, 42%, 56%);
+}
+
+.box-type {
+  margin-right: 4px;
+  padding: 0 4px;
+  border: 1px solid hsl(0, 0%, 75%);
+  border-radius: 2px;
+}
+
+.variable-info-details {
+  margin-top: 2px;
+  font-size: 14px;
+  font-weight: 400;
+  color: hsl(0, 0%, 40%);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.variable-info-text {
+  margin-left: 12px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.variable-info {
+  display: flex;
+  align-items: center;
+}
+
+.variables-tbl {
+  margin-top: 16px;
+}
+
+.value-info-text {
+  margin-top: 2px;
+  font-size: 14px;
+  font-weight: 400;
+  color: hsl(0, 0%, 40%);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: right;
+}
+
+/* Defined title with H1, H2, H3 */
+.title-h1 {
+  font-size: 2.5em;
+  color: $customColor$;
+}
+
+.title-h2 {
+  font-size: 2.0em;
+  font-weight: 400;
+  color: $customColor$;
+}
+
+.title-h3 {
+  font-size: 1.75em;
+  font-weight: 400;
+  color: rgb(102, 102, 102);
+}
+```
+
+
+```{r udf, echo=FALSE, warning=FALSE, message=FALSE}
+reportData <- as.data.frame(get("reportData", .dlookrExtraEnv))
+targetVariable <- get("targetVariable", .dlookrExtraEnv)
+sample_percent <- get("sample_percent", .dlookrExtraEnv)
+author <- get("author", .dlookrExtraEnv)
+
+# sampling with sample_percent
+N <- nrow(reportData)
+if (sample_percent < 100) {
+  N <- ceiling(nrow(reportData) * sample_percent / 100)
+  idx <- sample(seq(nrow(reportData)), size = N)
+  
+  reportData <- reportData[idx, ]
+}
+
+if (length(targetVariable) == 0) targetVariable <- NULL
+```
+
+```{r check_variables, echo=FALSE, warning=FALSE, message=FALSE, comment=""}
+idx.numeric <- find_class(reportData, type = "numerical")
+nm.numeric <- find_class(reportData, type = "numerical", index = FALSE)
+
+if (!is.null(targetVariable)) {
+  # remove target variable from variable index
+  idx.numeric <- idx.numeric[nm.numeric != targetVariable]
+  
+  factor_flag <- class(pull(reportData, targetVariable))[1] %in% c("factor", "ordered")
+  numeric_flag <- class(pull(reportData, targetVariable))[1] %in% c("integer", "numeric")
+  
+  target <- if (!factor_flag & numeric_flag) 
+    factor(pull(reportData, targetVariable)) else
+      pull(reportData, targetVariable)
+}
+
+# if all elements of a numerical variable are NA,
+# remove from correlation coefficient calculation
+idx.numeric <- idx.numeric[apply(as.data.frame(reportData[, idx.numeric]), 2,
+                                 function(x) !all(is.na(x)))]
+
+# if all elements of the numerical variable are the same value,
+# remove from the correlation coefficient calculation
+idx.numeric <- idx.numeric[apply(as.data.frame(reportData[, idx.numeric]), 2,
+                                 function(x) diff(range(x, na.rm = TRUE)) > 0)]
+```
+
+```{r create-overview}
+info <- c("Dataset" ,"Dataset Type", "Observations", "Variables", 
+          "Samples", "Created", "Created by")
+
+value <- c("$dataset$", 
+           class(reportData)[1], 
+           format(NROW(reportData), big.mark = ","),
+           NCOL(reportData),
+           paste0(N, " / ", format(NROW(reportData), big.mark = ","), " (",
+                  sample_percent, "%)"),
+           "$date$",
+           ifelse(author == "", "dlookr", author))
+
+overview <- data.frame(information = info, value = value)
+```
+
+```{r, results='asis'}
+h1("Overview", id = "ID-h1-overview", class = "title-h1")
+```
+
+```{r overview, results='asis'}
+overview %>% 
+  reactable(
+    defaultColDef = colDef(style = "font-size: 14px;color: hsl(0, 0%, 40%);"),
+    fullWidth = FALSE,
+    columns = list(
+      information = colDef(
+        name = "Informations",
+        width = 150,
+        style = "font-weight: 600;font-size: 14px;color: hsl(0, 0%, 40%);"
+      ),
+      value = colDef(
+        name = "Values",
+         width = 250
+      )
+    )
+  )
+```
+
+```{r, results='asis'}
+break_line_asis(1)
+```
+
+```{r, results='asis'}
+h1("Univariate Analysis", id = "ID-h1-univariate", class = "title-h1")
+```
+
+```{r, results='asis'}
+h2("Descriptive Statistics", id = "ID-h2-descriptive", class = "title-h2")
+```
+
+```{r variables, results='asis'}
+html_descriptive(reportData)
+
+break_line_asis(2)
+```
+
+```{r normality, results='asis'}
+h2("Normality Test", id = "ID-h2-normality", class = "title-h2")
+```
+
+```{r normality-list, comment="", results='asis'}
+if (length(idx.numeric) > 0) {
+  reportData %>% 
+    html_normality(theme = "$theme$")
+} else {
+  html_cat("No numerical variable")
+  break_line_asis(1)
+}
+
+break_line_asis(1)
+```
+
+```{r, results='asis'}
+h1("Bivariate Analysis", id = "ID-h1-bivariate", class = "title-h1")
+```
+
+```{r, results='asis'}
+h2("Compare Categorical Variables", id = "ID-h2-compare-categorical", class = "title-h2")
+```
+
+```{r compare_category, results='asis'}
+html_compare_category(reportData)
+
+break_line_asis(1)
+```
+
+```{r, results='asis'}
+h2("Compare Numerical Variables", id = "ID-h2-compare-numerical", class = "title-h2")
+```
+
+```{r compare_numerical, results='asis'}
+html_compare_numerical(reportData)
+
+break_line_asis(1)
+```
+
+```{r, results='asis'}
+h1("Multivariate Analysis", id = "ID-h1-multivariate", class = "title-h1")
+```
+
+```{r, results='asis'}
+h2("Correlation Analysis", id = "ID-h2-correlation", class = "title-h2")
+```
+
+```{r, results='asis'}
+h3("Correlation Matrix", id = "ID-h3-correlation-matrix", class = "title-h3")
+```
+
+```{r correlation, results='asis'}
+html_correlation(reportData) 
+
+break_line_asis(1)
+```
+
+```{r, results='asis'}
+h3("Correlation Plot", id = "ID-h3-correlation-plot", class = "title-h3")
+```
+
+```{r plot_correlation, results='asis'}
+if (length(idx.numeric) < 2) {
+  htmltools::h5("The number of numerical variables is less than 2.")
+} else {
+  dlookr::plot_correlate(reportData)  
+}
+
+if (!is.null(targetVariable)) {
+  break_line_asis(1)
+}  
+```
+
+```{r, results='asis'}
+if (!is.null(targetVariable))
+  h1("Target based Analysis", id = "ID-h1-target-based", class = "title-h1")
+```
+
+```{r, results='asis'}
+if (!is.null(targetVariable))
+  h2("Grouped Numerical Variables", id = "ID-h2-group-numerical", class = "title-h2")
+```
+
+```{r group_numerical, results='asis'}
+if (!is.null(targetVariable)) {
+  content <- html_target_numerical(reportData, target = targetVariable)
+} else {
+  content <- HTML("")
+}  
+
+content
+if (!is.null(targetVariable)) {
+  break_line_asis(1)
+}  
+```
+
+```{r, results='asis'}
+if (!is.null(targetVariable))
+  h2("Grouped Categorical Variables", id = "ID-h2-group-categorical", class = "title-h2")
+```
+
+```{r group_categorical, results='asis'}
+if (!is.null(targetVariable)) {
+  content <- html_target_categorical(reportData, target = targetVariable)
+} else {
+  content <- HTML("")
+}
+
+content
+if (!is.null(targetVariable)) {
+  break_line_asis(1)
+}  
+```
+
+
+```{r, results='asis'}
+if (!is.null(targetVariable))
+  h2("Grouped Correlation", id = "ID-h2-group-correlation", class = "title-h2")
+```
+
+```{r group_correlation, results='asis'}
+if (!is.null(targetVariable)) {
+  content <- html_target_correlation(reportData, target = targetVariable)
+} else {
+  content <- HTML("")
+}
+
+content
+break_line_asis(1)
+```
+
+
+
