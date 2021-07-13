@@ -16,7 +16,7 @@ diagnose_report(
   thres_uniq_cat = 0.5,
   thres_uniq_num = 5,
   logo_img = NULL,
-  create_date = format(Sys.Date(), "\%d \%B \%Y"),
+  create_date = Sys.time(),
   theme = c("orange", "blue")[1],
   sample_percent = 100,
   ...

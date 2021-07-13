@@ -61,9 +61,7 @@ agg_imputation <- function(object, ...) {
 
 #' @importFrom shiny tabsetPanel tabPanel
 #' @importFrom htmltools plotTag
-#' @importFrom purrr map_dfc
 #' @import dplyr
-#' @import ggplot2
 #' @import reactable
 #' @importFrom dlookr find_na get_class
 #' @export
@@ -143,12 +141,14 @@ html_impute_missing <- function(.data, target = NULL) {
               width = 600, height = 400, device = grDevices::png)
             })
           
-          mat <- imputes %>% 
-            purrr::map_dfc(function(x) {
-              agg_imputation(x) %>% 
-                as.data.frame()
-            })
-          
+          suppressMessages({
+            mat <- imputes %>% 
+              purrr::map_dfc(function(x) {
+                agg_imputation(x) %>% 
+                  as.data.frame()
+              })
+          })
+
           if (type %in% c("integer", "numeric")) {
             drops <- seq(ncol(mat))[seq(ncol(mat)) %% 2 == 1][-1]
             mat <- mat[, -c(drops)]
@@ -269,6 +269,168 @@ html_impute_missing <- function(.data, target = NULL) {
   }
 }
 
-#html_impute_missing(heartfailure2)
-#html_impute_missing(heartfailure2, target = "death_event")
+
+
+#' @importFrom shiny tabsetPanel tabPanel
+#' @importFrom htmltools plotTag
+#' @import dplyr
+#' @import reactable
+#' @importFrom dlookr diagnose_numeric imputate_na
+#' @export
+html_impute_outlier <- function(.data) {
+  method <- c("mean", "median", "mode", "capping")
+  
+  n <- nrow(.data)
+  
+  outlist <- .data %>% 
+    dlookr::diagnose_numeric() %>% 
+    filter(outlier > 0) %>% 
+    mutate(n = n) %>% 
+    mutate(rate_outlier = outlier / n)
+  
+  if (length(outlist) > 0) {
+    tab_outlier <- outlist %>% 
+      select(variables, n, min, max, outlier, rate_outlier) 
+    
+    tab_outlier %>% 
+      reactable(
+        columns = list(
+          n = colDef(
+            name = "observations"
+          ),
+          rate_outlier = colDef(
+            name = "outlier(%)",
+            format = colFormat(
+              percent = TRUE,
+              digits = 2
+            )
+          )
+        ),
+        details = function(index) {
+          variable <- tab_outlier$variables[index]
+          
+          imputes <- method %>% 
+            lapply(function(x) {
+              dlookr::imputate_outlier(.data, all_of(variable),  method = x)
+            })
+          
+          p_compare <- imputes %>% 
+            lapply(function(x) {
+              htmltools::plotTag({
+                plot(x)
+              }, sprintf("A plot of imputation"), 
+              width = 600, height = 400, device = grDevices::png)
+            })
+          
+          suppressMessages({
+            mat <- imputes %>% 
+              purrr::map_dfc(function(x) {
+                agg_imputation(x) %>% 
+                  as.data.frame()
+              })
+          }) 
+          
+          drops <- seq(ncol(mat))[seq(ncol(mat)) %% 2 == 1][-1]
+          mat <- mat[, -c(drops)]
+          names(mat) <- c("original", paste("inpute", method, sep = "_"))
+            
+          tab_compare <- mat %>% 
+            t() %>% 
+            as.data.frame() %>% 
+            select(mean, sd, IQR, p00, p25, p50,  p75, p100, skewness, kurtosis) %>% 
+            reactable(
+              defaultColDef = colDef(
+                format = colFormat(
+                  digits = 2
+                )
+              ),              
+              columns = list(
+                mean = colDef(
+                  name = "Mean"
+                ),
+                sd = colDef(
+                  name = "Standard Devation"
+                ),
+                p00 = colDef(
+                  name = "Min"
+                ),  
+                p25 = colDef(
+                  name = "Q1"
+                ),
+                p50 = colDef(
+                  name = "Median"
+                ),
+                p75 = colDef(
+                  name = "Q3"
+                ),
+                p100 = colDef(
+                  name = "Max"
+                ),
+                skewness = colDef(
+                  name = "Skewness"
+                ),
+                kurtosis = colDef(
+                  name = "Kurtosis"
+                )                
+              )
+            )
+            
+            tabs <- lapply(seq(length(method) + 1), function(x) {
+              if (x == 1) {
+                shiny::tabPanel("Distribution", tab_compare,
+                                hr(style = "border-top: 1px solid black;"),
+                                style = "padding-top:5px; padding-bottom:25px;")
+              } else {
+                shiny::tabPanel(title = paste0("Plot_", method[x-1]),
+                                p_compare[[x-1]],
+                                hr(style = "border-top: 1px solid black;"),
+                                style = "padding-top:5px; padding-bottom:25px;")
+              }
+              
+            })
+            
+            do.call(shiny::tabsetPanel, c(tabs, id = "viz"))
+        }          
+      )
+  } else {
+    h5("There are no variables in the dataset with outliers.")
+  }
+}
+
+#' @importFrom shiny tabsetPanel tabPanel
+#' @importFrom htmltools plotTag
+#' @import dplyr
+#' @import reactable
+#' @importFrom dlookr diagnose_numeric imputate_na
+#' @export
+html_resolve_skewness <- function(.data) {
+  skewlist <- find_skewness(.data, index = FALSE)
+  
+  outlist <- .data %>% 
+    dlookr::diagnose_numeric() %>% 
+    filter(outlier > 0) %>% 
+    mutate(n = n) %>% 
+    mutate(rate_outlier = outlier / n)
+  
+  if (length(outlist) > 0) {
+    tab_outlier <- outlist %>% 
+      select(variables, n, min, max, outlier, rate_outlier) 
+    
+    tab_outlier %>% 
+      reactable(
+        columns = list(
+          n = colDef(
+            name = "observations"
+          ),
+          rate_outlier = colDef(
+            name = "outlier(%)",
+            format = colFormat(
+              percent = TRUE,
+              digits = 2
+            )
+          )
+        )
+      )
+  } 
+}  
 

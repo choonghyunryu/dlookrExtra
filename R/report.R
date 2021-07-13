@@ -675,3 +675,131 @@ eda_report <- function(.data, target = NULL, output_file = NULL,
     browseURL(output_file)
   }
 }
+
+
+
+
+#' @importFrom rmarkdown render
+#' @importFrom knitr image_uri
+#' @export
+transformation_report <- function(.data, target = NULL, output_file = NULL, 
+                       output_dir = tempdir(), browse = TRUE, 
+                       title = "Transformation", subtitle = deparse(substitute(.data)), 
+                       author = "dlookr", title_color = "gray", logo_img = NULL, 
+                       create_date = Sys.time(), theme = c("orange", "blue")[1], 
+                       sample_percent = 100, ...) {
+  tryCatch(vars <- tidyselect::vars_select(names(.data),
+                                           !! rlang::enquo(target)),
+           error = function(e) {
+             pram <- as.character(substitute(target))
+             stop(sprintf("Column %s is unknown", pram))
+           },
+           finally = NULL)
+  
+  if (sample_percent > 100 | sample_percent <= 0) {
+    stop("sample_percent must be a value between (0, 100].")
+  }
+  assign("reportData", as.data.frame(.data), .dlookrExtraEnv)
+  assign("targetVariable", vars, .dlookrExtraEnv)
+  assign("sample_percent", sample_percent, .dlookrExtraEnv)  
+  assign("author", author, .dlookrExtraEnv)  
+  
+  path <- output_dir
+  
+  rmd   <- "transformation_temp.Rmd"
+  header <- "header_temp.html"
+  logo  <- "dlookr_html.svg"  
+  
+  if (is.null(output_file))
+    output_file <- "Transformation_Report.html"
+  output_file <- paste(path, output_file, sep = "/")
+  
+  #--Copy files ----------------------------------------------------------------
+  # copy markdown
+  rmd_file <- file.path(system.file(package = "dlookrExtra"), "report", rmd)
+  flag <- file.copy(from = rmd_file, to = path, recursive = TRUE)
+  
+  # copy header  
+  header_file <- file.path(system.file(package = "dlookrExtra"), "report", header)
+  flag <- file.copy(from = header_file, to = path, recursive = TRUE)  
+  
+  #--Store parameters ----------------------------------------------------------  
+  # store theme
+  rmd_content <- gsub("\\$theme\\$", theme, 
+                      readLines(paste(path, rmd, sep = "/")))
+  cat(rmd_content, file = paste(path, rmd, sep = "/"), sep = "\n")
+  
+  if (theme == "orange") {
+    rmd_content <- gsub("\\$customLightColor\\$", "var(--custom-lightorange)", 
+                        readLines(paste(path, rmd, sep = "/")))
+    cat(rmd_content, file = paste(path, rmd, sep = "/"), sep = "\n")
+    
+    rmd_content <- gsub("\\$customColor\\$", "var(--custom-orange)", 
+                        readLines(paste(path, rmd, sep = "/")))
+    cat(rmd_content, file = paste(path, rmd, sep = "/"), sep = "\n")    
+  } else if (theme == "blue") {
+    rmd_content <- gsub("\\$customLightColor\\$", "var(--custom-lightblue)", 
+                        readLines(paste(path, rmd, sep = "/")))
+    cat(rmd_content, file = paste(path, rmd, sep = "/"), sep = "\n")
+    
+    rmd_content <- gsub("\\$customColor\\$", "var(--custom-blue)", 
+                        readLines(paste(path, rmd, sep = "/")))
+    cat(rmd_content, file = paste(path, rmd, sep = "/"), sep = "\n")        
+  }  
+  
+  # store title
+  header_content <- sub("\\$title\\$", title, readLines(paste(path, header, sep = "/")))
+  cat(header_content, file = paste(path, header, sep = "/"), sep = "\n")
+  
+  # store subtitle
+  header_content <- sub("\\$subtitle\\$", subtitle, readLines(paste(path, header, sep = "/")))
+  cat(header_content, file = paste(path, header, sep = "/"), sep = "\n")
+  
+  # store title color
+  rmd_content <- sub("\\$title_color\\$", title_color, readLines(paste(path, rmd, sep = "/")))
+  cat(rmd_content, file = paste(path, rmd, sep = "/"), sep = "\n")
+  
+  # store the menus
+  disabled <- ifelse(is.null(target), 
+                     "<li><a href=\"#ID-h1-overview\">Overview</a></li>
+                      <li><a href=\"#ID-h1-imputation\">Imputation</a></li>	
+                      <li><a href=\"#\" class=\"disable-links\">Target based Analysis</a></li>",
+                     "<li><a href=\"#ID-h1-overview\">Overview</a></li>
+                      <li><a href=\"#ID-h1-imputation\">Imputation</a></li>	
+                      <li><a href=\"#ID-h1-target-based\">Target based Analysis</a></li>")
+  header_content <- sub("\\$menu\\$", disabled, readLines(paste(path, header, sep = "/")))
+  cat(header_content, file = paste(path, header, sep = "/"), sep = "\n")
+  
+  # store dataset
+  rmd_content <- sub("\\$dataset\\$", deparse(substitute(.data)), 
+                     readLines(paste(path, rmd, sep = "/")))
+  cat(rmd_content, file = paste(path, rmd, sep = "/"), sep = "\n")   
+  
+  # store created date
+  rmd_content <- sub("\\$date\\$", create_date, 
+                     readLines(paste(path, rmd, sep = "/")))
+  cat(rmd_content, file = paste(path, rmd, sep = "/"), sep = "\n")   
+  
+  # store logo image
+  if (is.null(logo_img)) {
+    logo_file <- file.path(system.file(package = "dlookrExtra"), "report", logo)
+    base64_logo <- knitr::image_uri(logo_file)
+  } else {
+    base64_logo <- knitr::image_uri(logo_img)
+  }
+  header_content <- sub("\\$logo\\$", base64_logo,
+                        readLines(paste(path, header, sep = "/")))
+  cat(header_content, file = paste(path, header, sep = "/"), sep = "\n")
+  
+  #--Rendering------------------------------------------------------------------    
+  rmarkdown::render(paste(path, rmd, sep = "/"), output_file = output_file)
+  
+  file.remove(paste(path, rmd, sep = "/"))
+  file.remove(paste(path, header, sep = "/"))  
+  
+  if (browse & file.exists(output_file)) {
+    browseURL(output_file)
+  }
+}
+
+
