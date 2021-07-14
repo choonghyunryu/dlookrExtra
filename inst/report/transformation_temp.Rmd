@@ -1,0 +1,286 @@
+---
+title: "dlookr: Transformation"
+author: ""
+always_allow_html: yes
+output:
+  dlookrExtra::dlookrExtra_templ_html:
+    toc: false
+---
+
+```{r setup, echo=FALSE, warning=FALSE, message=FALSE}
+knitr::opts_chunk$set(echo = FALSE, 
+                      message = FALSE, 
+                      warning = FALSE, 
+                      collapse = FALSE,
+                      comment = "#>",
+                      fig.align = "center")
+knitr::opts_chunk$set(fig.width = 12, fig.height = 9)
+```
+
+```{r load_packages}
+options(warn = -1)
+
+if (!requireNamespace("mice", quietly = TRUE)) {
+  stop("Package 'mice' needed for this function to work. Please install it.", 
+       call. = FALSE)
+} else {
+  library(mice)
+}
+
+if (!requireNamespace("rpart", quietly = TRUE)) {
+  stop("Package 'rpart' needed for this function to work. Please install it.", 
+       call. = FALSE)
+}
+
+if (!requireNamespace("DMwR", quietly = TRUE)) {
+  stop("Package 'DMwR' needed for this function to work. Please install it.", 
+       call. = FALSE)
+}
+
+library(dlookr)
+library(dplyr)
+```
+
+```{css, echo=FALSE}
+:root {
+  --custom-grey60: rgb(102, 102, 102);
+  --custom-grey20: rgb(204, 204, 204);
+  --custom-grey10: rgb(230, 230, 230);
+  --custom-blue: rgb(0, 114, 188);
+  --custom-lightblue: rgb(204, 227, 242);
+  --custom-orange: rgb(255, 127, 42); 
+  --custom-lightorange: rgb(255, 204, 170); 
+}
+
+/* Font from https://fontsarena.com/hanken-grotesk-by-hanken-design-co/ */
+@font-face {
+  font-family: 'Hanken Grotesk';
+  font-style: normal;
+  font-weight: 400;
+  src: url("fonts/HKGrotesk-Regular.woff2") format("woff2"),
+       url("fonts/HKGrotesk-Regular.woff") format("woff");
+}
+
+@font-face {
+  font-family: 'Hanken Grotesk';
+  font-style: normal;
+  font-weight: 600;
+  src: url("fonts/HKGrotesk-SemiBold.woff2") format("woff2"),
+       url("fonts/HKGrotesk-SemiBold.woff") format("woff");
+}
+
+@font-face {
+  font-family: 'Hanken Grotesk';
+  font-style: normal;
+  font-weight: 700;
+  src: url("fonts/HKGrotesk-Bold.woff2") format("woff2"),
+       url("fonts/HKGrotesk-Bold.woff") format("woff");
+}
+
+#header .title{
+  color: $title_color$;
+}
+
+.navbar {
+    background-color: #f0f0f0;  
+    border-bottom : 2px solid $customColor$ !important;
+}
+
+.nav>li>a {
+    position: relative;
+    display: block;
+    padding: 10px 15px;
+}
+
+a {
+    color: #337ab7 !important;
+    background-color: transparent !important;
+    text-decoration: none;
+}
+
+a.disable-links {
+  pointer-events: none;
+  color: var(--custom-grey60) !important;
+}
+
+/* Warnings */
+.tag {
+  display: inline-block;
+  padding: 2px 12px;
+  border-radius: 5px;
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.variables {
+  font-size: 16px;
+  color: hsl(358, 42%, 56%);
+}
+
+.box-type {
+  margin-right: 4px;
+  padding: 0 4px;
+  border: 1px solid hsl(0, 0%, 75%);
+  border-radius: 2px;
+}
+
+.variable-info-details {
+  margin-top: 2px;
+  font-size: 14px;
+  font-weight: 400;
+  color: hsl(0, 0%, 40%);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.variable-info-text {
+  margin-left: 12px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.variable-info {
+  display: flex;
+  align-items: center;
+}
+
+.variables-tbl {
+  margin-top: 16px;
+}
+
+.value-info-text {
+  margin-top: 2px;
+  font-size: 14px;
+  font-weight: 400;
+  color: hsl(0, 0%, 40%);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: right;
+}
+
+/* Defined title with H1, H2, H3 */
+.title-h1 {
+  font-size: 2.5em;
+  color: $customColor$;
+}
+
+.title-h2 {
+  font-size: 2.0em;
+  font-weight: 400;
+  color: $customColor$;
+}
+
+.title-h3 {
+  font-size: 1.75em;
+  font-weight: 400;
+  color: rgb(102, 102, 102);
+}
+```
+
+
+```{r udf, echo=FALSE, warning=FALSE, message=FALSE}
+reportData <- as.data.frame(get("reportData", .dlookrExtraEnv))
+targetVariable <- get("targetVariable", .dlookrExtraEnv)
+
+if (length(targetVariable) == 0) targetVariable <- NULL
+
+idx.numeric <- find_class(reportData, type = "numerical")
+varname <- names(reportData)[idx.numeric] %>% 
+  setdiff(targetVariable)
+
+# sampling with sample_percent
+N <- nrow(reportData)
+if (sample_percent < 100) {
+  N <- ceiling(nrow(reportData) * sample_percent / 100)
+  idx <- sample(seq(nrow(reportData)), size = N)
+  
+  reportData <- reportData[idx, ]
+}
+
+```
+
+```{r create-overview}
+info <- c("Dataset" ,"Dataset Type", "Observations", "Variables", 
+          "Samples", "Created", "Created by")
+
+value <- c("$dataset$", 
+           class(reportData)[1], 
+           format(NROW(reportData), big.mark = ","),
+           NCOL(reportData),
+           paste0(N, " / ", format(NROW(reportData), big.mark = ","), " (",
+                  sample_percent, "%)"),
+           "$date$",
+           ifelse(author == "", "dlookr", author))
+
+overview <- data.frame(information = info, value = value)
+```
+
+```{r overview, results='asis'}
+overview %>% 
+  reactable(
+    defaultColDef = colDef(style = "font-size: 14px;color: hsl(0, 0%, 40%);"),
+    fullWidth = FALSE,
+    columns = list(
+      information = colDef(
+        name = "Informations",
+        width = 150,
+        style = "font-weight: 600;font-size: 14px;color: hsl(0, 0%, 40%);"
+      ),
+      value = colDef(
+        name = "Values",
+         width = 250
+      )
+    )
+  )
+```
+
+```{r, results='asis'}
+break_line_asis(1)
+```
+
+```{r, results='asis'}
+h1("Imputation", id = "ID-h1-imputation", class = "title-h1")
+```
+
+```{r, results='asis'}
+h2("Missing Values", id = "ID-h2-missing", class = "title-h2")
+```
+
+```{r nalist, results='asis'}
+html_impute_missing(reportData, targetVariable)
+```
+
+```{r, results='asis'}
+h2("Outliers", id = "ID-h2-outlier", class = "title-h2")
+```
+
+```{r outlist, results='asis'}
+html_impute_outlier(reportData)
+```
+
+```{r, results='asis'}
+h1("Resolving Skewness", id = "ID-h1-skewness", class = "title-h1")
+```
+
+```{r skweness, results='asis'}
+html_resolve_skewness(reportData)
+```
+
+```{r, results='asis'}
+h1("Binning", id = "ID-h1-binning", class = "title-h1")
+```
+
+```{r binning, results='asis'}
+html_binning(reportData)
+```
+
+```{r, results='asis'}
+h1("Optimal Binning", id = "ID-h1-optimal-binning", class = "title-h1")
+```
+
+```{r optimal-binning, results='asis'}
+# html_binning(reportData)
+```
+
+

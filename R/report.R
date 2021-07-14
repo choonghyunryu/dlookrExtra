@@ -763,10 +763,14 @@ transformation_report <- function(.data, target = NULL, output_file = NULL,
   disabled <- ifelse(is.null(target), 
                      "<li><a href=\"#ID-h1-overview\">Overview</a></li>
                       <li><a href=\"#ID-h1-imputation\">Imputation</a></li>	
-                      <li><a href=\"#\" class=\"disable-links\">Target based Analysis</a></li>",
+                      <li><a href=\"#ID-h1-skewness\">Resolving Skewness</a></li>	
+                      <li><a href=\"#ID-h1-binning\">Binning</a></li>	
+                      <li><a href=\"#\" class=\"disable-links\">Optimal Binning</a></li>",
                      "<li><a href=\"#ID-h1-overview\">Overview</a></li>
                       <li><a href=\"#ID-h1-imputation\">Imputation</a></li>	
-                      <li><a href=\"#ID-h1-target-based\">Target based Analysis</a></li>")
+                      <li><a href=\"#ID-h1-skewness\">Resolving Skewness</a></li>	
+                      <li><a href=\"#ID-h1-binning\">Binning</a></li>	
+                      <li><a href=\"#ID-h1-optimal-binning\">Optimal Binning</a></li>")
   header_content <- sub("\\$menu\\$", disabled, readLines(paste(path, header, sep = "/")))
   cat(header_content, file = paste(path, header, sep = "/"), sep = "\n")
   
