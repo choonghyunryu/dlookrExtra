@@ -258,34 +258,40 @@ html_variable <- function(.data, thres_uniq_cat = 0.5, thres_uniq_num = 5,
     # defaultPageSize = nrow(tabs),
     defaultColDef = colDef(style = "font-size: 14px;color: hsl(0, 0%, 40%);"),
     columns = list(
-      # variables = colDef(
+      variables = colDef(
       #   cell = function(value) a(name = value, value)
-      # ),
+        name = "Variables",
+      ),
       types = colDef(
+        name = "Types",
         width = 90
       ),      
       missing = colDef(
+        name = "Missing",
         align = "center",
         width = 100,
         cell = function(value) alert_indicator(value)
       ),
       cardinality = colDef(
+        name = "Cardinality",
         align = "center",
         width = 120,
         cell = function(value) unique_indicator(value, TRUE, theme)
       ),
       zero = colDef(
+        name = "Zero",
         align = "center",
         width = 90,
         cell = function(value) alert_indicator(value)
       ),    
       minus = colDef(
-        name = "negative",
+        name = "Negative",
         align = "center",
         width = 100,
         cell = function(value) alert_indicator(value)
       ),
       outlier = colDef(
+        name = "Outlier",
         align = "center",
         width = 90,
         cell = function(value) alert_indicator(value)
@@ -315,10 +321,17 @@ html_variable <- function(.data, thres_uniq_cat = 0.5, thres_uniq_num = 5,
           fullWidth = FALSE,
           defaultColDef = colDef(style = "font-size: 14px;color: hsl(0, 0%, 40%);"),
           columns = list(
-            count = colDef(name = "Frequency", 
-                           format = colFormat(separators = TRUE)),
-            percent = colDef(name = "Percent", 
-                             format = colFormat(percent = TRUE, digits = 1))
+            metric = colDef(
+              name = "Metric"
+            ),
+            count = colDef(
+              name = "Frequency", 
+              format = colFormat(separators = TRUE)
+            ),
+            percent = colDef(
+              name = "Percent", 
+              format = colFormat(percent = TRUE, digits = 1)
+            )
           ))
       )
 
@@ -380,7 +393,24 @@ html_variable <- function(.data, thres_uniq_cat = 0.5, thres_uniq_num = 5,
           select(min:max) %>% 
           mutate(mean = round(mean, 3)) %>% 
           reactable(fullWidth = FALSE,
-                    defaultColDef = colDef(style = "font-size: 14px;color: hsl(0, 0%, 40%);"))
+                    defaultColDef = colDef(
+                      style = "font-size: 14px;color: hsl(0, 0%, 40%);"
+                    ),
+                    columns = list(
+                      min = colDef(
+                        name = "Min"
+                      ),
+                      mean = colDef(
+                        name = "Mean"
+                      ),
+                      median = colDef(
+                        name = "Median"
+                      ),
+                      max = colDef(
+                        name = "Max"
+                      )      
+                    )
+          )
 
         p_hist <- htmltools::plotTag({
           dlookr::plot_hist_numeric(.data, which(names(.data) == variable))
@@ -490,13 +520,15 @@ html_missing <- function(tab, grade = c("Good" = 0.05, "OK" = 0.1,
       diagn_missing,
       defaultColDef = colDef(style = "font-size: 14px;color: hsl(0, 0%, 40%);"),
       columns = list(
-        missing_count = colDef(name = "missing",
+        variables = colDef(name = "Variables"),  
+        missing_count = colDef(name = "Missing",
                                width = 120,
                                format = colFormat(separators = TRUE)),    
-        missing_percent = colDef(name = "missing (%)",
+        missing_percent = colDef(name = "Missing (%)",
                                  width = 130,
                                  format = colFormat(percent = TRUE, digits = 1)),
         status = colDef(width = 100,
+                        name = "Status",
                         cell = function(value) {
                           color <- switch(as.character(value),
                                           Good = "#D9EF8B",
@@ -506,7 +538,10 @@ html_missing <- function(tab, grade = c("Good" = 0.05, "OK" = 0.1,
                                           Remove = "#D73027")
                           badge <- status_badge(color = color)
                           tagList(badge, value)
-                        })
+                        }),
+        recommand = colDef(
+          name = "Recommand"
+        )
       )
     )
     
@@ -612,14 +647,22 @@ html_outlier <- function(.data, theme = c("orange", "blue")[1]) {
   
   tabs %>% 
     reactable(
-      # defaultPageSize = nrow(tabs),
       defaultColDef = colDef(style = "font-size: 14px;color: hsl(0, 0%, 40%);"),
       columns = list(
-        rate_outlier = colDef(name = "outliers (%)",
+        variables = colDef(
+          name = "Variables"
+        ),
+        min = colDef(
+          name = "Min"
+        ),  
+        max = colDef(
+          name = "Max"
+        ),          
+        rate_outlier = colDef(name = "Outliers (%)",
                               format = colFormat(percent = TRUE, digits = 1)),
-        outlier = colDef(name = "outliers",
+        outlier = colDef(name = "Outliers",
                          format = colFormat(separators = TRUE)),
-        pos_outlier = colDef(name = "position",
+        pos_outlier = colDef(name = "Position",
           cell = function(value) outlier_indicator(value)
         )    
       ),

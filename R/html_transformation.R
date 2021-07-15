@@ -103,18 +103,22 @@ html_impute_missing <- function(.data, target = NULL) {
     
     tab_missing %>% 
       reactable(
+        defaultColDef = colDef(style = "font-size: 14px;color: hsl(0, 0%, 40%);"),
         columns = list(
           variable = colDef(
-            name = "variables"
+            name = "Variables"
           ),        
           class = colDef(
-            name = "data type"
+            name = "Data Type"
           ),
           n = colDef(
-            name = "observations"
+            name = "Observations"
           ),
+          missing = colDef(
+            name = "Missing"
+          ),          
           rate_missing = colDef(
-            name = "missing(%)",
+            name = "Missing(%)",
             format = colFormat(
               percent = TRUE,
               digits = 2
@@ -176,6 +180,7 @@ html_impute_missing <- function(.data, target = NULL) {
               select(mean, sd, IQR, p00, p25, p50,  p75, p100, skewness, kurtosis) %>% 
               reactable(
                 defaultColDef = colDef(
+                  style = "font-size: 14px;color: hsl(0, 0%, 40%);",
                   format = colFormat(
                     digits = 2
                   )
@@ -242,6 +247,7 @@ html_impute_missing <- function(.data, target = NULL) {
             tab_compare <- tab_compare %>% 
               reactable(
                 defaultColDef = colDef(
+                  style = "font-size: 14px;color: hsl(0, 0%, 40%);",
                   format = colFormat(
                     separators = TRUE
                   )
@@ -251,6 +257,7 @@ html_impute_missing <- function(.data, target = NULL) {
             tab_compare_rate <- tab_compare_rate %>% 
               reactable(
                 defaultColDef = colDef(
+                  style = "font-size: 14px;color: hsl(0, 0%, 40%);",
                   format = colFormat(
                     percent = TRUE,
                     digits = 2
@@ -309,12 +316,25 @@ html_impute_outlier <- function(.data) {
     
     tab_outlier %>% 
       reactable(
+        defaultColDef = colDef(style = "font-size: 14px;color: hsl(0, 0%, 40%);"),
         columns = list(
+          variables = colDef(
+            name = "Variables"
+          ),          
           n = colDef(
-            name = "observations"
+            name = "Observations"
           ),
+          min = colDef(
+            name = "Min"
+          ), 
+          max = colDef(
+            name = "Max"
+          ), 
+          outlier = colDef(
+            name = "Outlier"
+          ),           
           rate_outlier = colDef(
-            name = "outlier(%)",
+            name = "Outlier(%)",
             format = colFormat(
               percent = TRUE,
               digits = 2
@@ -355,6 +375,7 @@ html_impute_outlier <- function(.data) {
             select(mean, sd, IQR, p00, p25, p50,  p75, p100, skewness, kurtosis) %>% 
             reactable(
               defaultColDef = colDef(
+                style = "font-size: 14px;color: hsl(0, 0%, 40%);",
                 format = colFormat(
                   digits = 2
                 )
@@ -431,6 +452,7 @@ html_resolve_skewness <- function(.data) {
     tab_skewness %>% 
       reactable(
         defaultColDef = colDef(
+          style = "font-size: 14px;color: hsl(0, 0%, 40%);",
           minWidth = 80,
           maxWidth = 100
         ),
@@ -503,6 +525,7 @@ html_resolve_skewness <- function(.data) {
             select(mean, sd, IQR, p00, p25, p50,  p75, p100, skewness, kurtosis) %>% 
             reactable(
               defaultColDef = colDef(
+                style = "font-size: 14px;color: hsl(0, 0%, 40%);",
                 format = colFormat(
                   digits = 2
                 )
@@ -603,6 +626,7 @@ html_binning <- function(.data) {
     
     tab_numerical %>% 
       reactable(
+        defaultColDef = colDef(style = "font-size: 14px;color: hsl(0, 0%, 40%);"),
         columns = list(
           variables = colDef(
             name = "Variables",
@@ -645,6 +669,7 @@ html_binning <- function(.data) {
           
           tab_bins <- summary(bins[[index]]) %>% 
             reactable(
+              defaultColDef = colDef(style = "font-size: 14px;color: hsl(0, 0%, 40%);"),
               columns = list(
                 levels = colDef(
                   name = "Bins"
@@ -677,6 +702,127 @@ html_binning <- function(.data) {
       )
   } else {
     h5("There are no numerical variables.")
+  }
+}  
+
+
+#' @importFrom shiny tabsetPanel tabPanel
+#' @importFrom htmltools plotTag
+#' @importFrom purrr map_int
+#' @import dplyr
+#' @import reactable
+#' @importFrom dlookr diagnose binning_by
+#' @export
+html_optimal_binning <- function(.data, target) {
+  numlist <- find_class(.data, "numerical", index = FALSE)
+  
+  if (!target %in% names(.data)) {
+    h5(paste0("The target variable ", target, " is not in the data."))
+  } else if (length(numlist) == 0) {
+    h5("There are no numerical variables.")
+  } else {
+    n_levles <- length(table(pull(.data, target)))
+    
+    if (n_levles != 2) {
+      h5("The target variable is not a binary class.")
+    } else {
+      tab_numerical <- .data %>% 
+        select_at(numlist) %>% 
+        dlookr::diagnose() %>% 
+        select(-missing_count, -missing_percent)
+      
+      # Optimal Binning for Scoring Modeling
+      bins <- lapply(numlist, function(x)
+        binning_by(.data, y = target, x = all_of(x), p = 0.05))
+      
+      success <- ifelse(sapply(bins, is.character),
+                        "No significant splits", "Success")
+      
+      tab_numerical <- tab_numerical %>% bind_cols(
+        data.frame(success = success))
+        
+      tab_numerical$n_bins <- bins %>% 
+        purrr::map_int(function(x) {
+          attr(x, "levels") %>% length
+        })  
+      
+      tab_numerical %>% 
+        reactable(
+          defaultColDef = colDef(style = "font-size: 14px;color: hsl(0, 0%, 40%);"),
+          columns = list(
+            variables = colDef(
+              name = "Variables",
+              minWidth = 100,
+              maxWidth = 150
+            ),
+            types = colDef(
+              name = "Data Types",
+              minWidth = 80,
+              maxWidth = 100
+            ),
+            unique_count = colDef(
+              name = "Unique",
+              format = colFormat(
+                separators = TRUE
+              )
+            ),
+            unique_rate = colDef(
+              name = "Unique Rate",
+              format = colFormat(
+                digits = 3
+              )
+            ),
+            success = colDef(
+              name = "Success"
+            ),
+            n_bins = colDef(
+              name = "Bins",
+              minWidth = 50,
+              maxWidth = 80
+            )            
+          ),
+          details = function(index) {
+            if (tab_numerical$n_bins[index] > 0) {
+              p_dist <- htmltools::plotTag({
+                plot(bins[[index]])
+              }, sprintf("A plot of bins"), 
+              width = 600, height = 400, device = grDevices::png)
+              
+              sticky_style <- list(position = "sticky", left = 0, 
+                                   background = "#fff", zIndex = 1,
+                                   borderRight = "1px solid #eee",
+                                   fontSize = "15px")
+              
+              tab_bins <- attr(bins[[index]], "performance") %>% 
+                select(-CntCumPos, -CntCumNeg, -RateCumPos, -RateCumNeg) %>% 
+                reactable(
+                  sortable = FALSE,
+                  defaultColDef = colDef(
+                    style = "font-size: 14px;color: hsl(0, 0%, 40%);",
+                    format = colFormat(
+                      digits = 3
+                    )
+                  ),
+                  columns = list(
+                    Bin = colDef(
+                      style = sticky_style,
+                      headerStyle = sticky_style
+                    )
+                  )
+                )
+              
+              shiny::tabsetPanel(
+                shiny::tabPanel("Distribution", p_dist,
+                                hr(style = "border-top: 1px solid black;"),
+                                style = "padding-top:5px; padding-bottom:25px;"), 
+                shiny::tabPanel("Frequency Table", tab_bins,
+                                hr(style = "border-top: 1px solid black;"),
+                                style = "padding-top:5px; padding-bottom:25px;")
+              )
+            }
+          }          
+        )  
+    }  
   }
 }  
 

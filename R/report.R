@@ -791,7 +791,7 @@ transformation_report <- function(.data, target = NULL, output_file = NULL,
   } else {
     base64_logo <- knitr::image_uri(logo_img)
   }
-  header_content <- sub("\\$logo\\$", base64_logo,
+  header_content <- gsub("\\$logo\\$", base64_logo,
                         readLines(paste(path, header, sep = "/")))
   cat(header_content, file = paste(path, header, sep = "/"), sep = "\n")
   

@@ -185,10 +185,6 @@ targetVariable <- get("targetVariable", .dlookrExtraEnv)
 
 if (length(targetVariable) == 0) targetVariable <- NULL
 
-idx.numeric <- find_class(reportData, type = "numerical")
-varname <- names(reportData)[idx.numeric] %>% 
-  setdiff(targetVariable)
-
 # sampling with sample_percent
 N <- nrow(reportData)
 if (sample_percent < 100) {
@@ -214,6 +210,10 @@ value <- c("$dataset$",
            ifelse(author == "", "dlookr", author))
 
 overview <- data.frame(information = info, value = value)
+```
+
+```{r, results='asis'}
+h1("Overview", id = "ID-h1-overview", class = "title-h1")
 ```
 
 ```{r overview, results='asis'}
@@ -280,7 +280,7 @@ h1("Optimal Binning", id = "ID-h1-optimal-binning", class = "title-h1")
 ```
 
 ```{r optimal-binning, results='asis'}
-# html_binning(reportData)
+html_optimal_binning(reportData, targetVariable)
 ```
 
 

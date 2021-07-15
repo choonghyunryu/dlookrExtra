@@ -434,16 +434,19 @@ tab_warning %>%
                            minWidth = 120),
     columns = list(
       check = colDef(
+        name = "Checks",
         style = function(value) {
           list(color = "#007000", fontWeight = "bold")
         }
       ),
       judgement = colDef(
+        name = "Judgements",
         style = function(value) {
           list(color = "#fdb368", fontWeight = "bold")
         }
       ),      
       remove = colDef(
+        name = "Removes",
         style = function(value) {
           list(color = "#e00000", fontWeight = "bold")
         }
@@ -462,6 +465,7 @@ tab_warning %>%
     defaultColDef = colDef(style = "font-size: 14px;color: hsl(0, 0%, 40%);"),
     columns = list(
       warnings = colDef(
+        name = "Warnings",
         cell = function(value, index) {
           variable_name <- strsplit(value, " ") %>% unlist() %>% "["(1)
           msg <- strsplit(value, " ") %>% unlist() %>% "["(-1) %>% paste(collapse = " ")
@@ -491,8 +495,9 @@ tab_warning %>%
           )
         }
       ),
-      status = colDef(name = "types", width = 100),
+      status = colDef(name = "Types", width = 100),
       recommand = colDef(
+        name = "Recommands", 
         width = 130,
         cell = function(value) {
           class <- paste0("tag recommand-", tolower(value))

@@ -538,7 +538,7 @@ html_normality <- function(.data, theme = c("orange", "blue")[1]) {
 #' @importFrom shiny icon tabsetPanel tabPanel
 #' @importFrom dlookr compare_category
 #' @importFrom purrr map_int
-#' @importFrom hrbrthemes theme_ipsum
+#' @importFrom hrbrthemes theme_ipsum scale_fill_ipsum
 #' @import reactable
 #' @import dplyr
 #' @import htmltools
@@ -593,7 +593,7 @@ html_compare_category <- function(.data, n_cells = 20, n_levels = 10) {
     
       p <- p +
         hrbrthemes::theme_ipsum(base_family = dlookr:::get_font_family()) +
-        scale_fill_ipsum(na.value = "grey80") +
+        hrbrthemes::scale_fill_ipsum(na.value = "grey80") +
         theme(legend.position = "none",
               panel.grid.major.x = element_blank(),
               axis.text.x = element_blank(),
@@ -698,6 +698,7 @@ html_compare_category <- function(.data, n_cells = 20, n_levels = 10) {
           
           dframe %>% 
             reactable(
+              defaultColDef = colDef(style = "font-size: 14px;color: hsl(0, 0%, 40%);"),
               columns = colum_list,
               columnGroups = cname
             )
@@ -767,6 +768,7 @@ html_compare_numerical <- function(.data) {
         tab_model <- num_compares$linear[index, ] %>% 
           select(-logLik, -AIC, -BIC, -deviance, -df.residual, -nobs) %>% 
           reactable(
+            defaultColDef = colDef(style = "font-size: 14px;color: hsl(0, 0%, 40%);"),
             columns = list(
               var1 = colDef(
                 name = "First Variable"
@@ -871,6 +873,7 @@ html_compare_numerical <- function(.data) {
           tab_model <- num_compares$linear[index, ] %>% 
             select(-logLik, -AIC, -BIC, -deviance, -df.residual, -nobs) %>% 
             reactable(
+              defaultColDef = colDef(style = "font-size: 14px;color: hsl(0, 0%, 40%);"),
               columns = list(
                 var1 = colDef(
                   name = "First Variable"
@@ -1034,6 +1037,7 @@ html_target_numerical <- function(.data, target) {
           tab_stat <- mat %>% 
             reactable(
               defaultColDef = colDef(
+                style = "font-size: 14px;color: hsl(0, 0%, 40%);",
                 align = "right"
               ),
               columns = list(
@@ -1133,6 +1137,7 @@ html_target_categorical <- function(.data, target) {
           tab_ratio <- ratio %>% 
             reactable(
               defaultColDef = colDef(
+                style = "font-size: 14px;color: hsl(0, 0%, 40%);",
                 format = colFormat(percent = TRUE,
                                    digits = 1)
               ),
@@ -1225,6 +1230,7 @@ html_target_correlation <- function(.data, target) {
           mat_corr <- mat_corr %>% 
             reactable(
               defaultColDef = colDef(
+                style = "font-size: 14px;color: hsl(0, 0%, 40%);",
                 format = colFormat(
                   digits = 3
                 )
