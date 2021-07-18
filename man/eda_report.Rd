@@ -40,6 +40,9 @@ eda_report(
 
 \item{logo_img}{character. name of logo image on top right.}
 
+\item{create_date}{Date or POSIXct, character. The date on which the report is generated. 
+The default value is the result of Sys.time().}
+
 \item{theme}{character. name of theme for report. support "orange" and "blue". 
 default is "orange".}
 
@@ -48,12 +51,6 @@ It has a value between (0, 100]. 100 means all data, and 5 means 5% of sample da
 This is useful for data with a large number of observations.}
 
 \item{...}{arguments to be passed to methods.}
-
-\item{thres_uniq_cat}{numeric. threshold to use for "Unique Values - 
-Categorical Variables". default is 0.5.}
-
-\item{thres_uniq_num}{numeric. threshold to use for "Unique Values - 
-Numerical Variables". default is 0.1.}
 }
 \description{
 The eda_report() report the information for diagnosing

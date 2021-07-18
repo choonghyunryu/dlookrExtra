@@ -45,7 +45,7 @@ break_line_asis <- function(n = 1) {
 #' @import dplyr
 #' @export
 print_tab <- function(tab, n_rows = 25, add_row = 3, caption = "", full_width = TRUE,
-                      font_size = 14, align = NULL) {
+                      font_size = 14, align = NULL, col.names = NA) {
   N <- nrow(tab)
   n_pages <- 1
   
@@ -64,11 +64,11 @@ print_tab <- function(tab, n_rows = 25, add_row = 3, caption = "", full_width = 
     if (is.null(align)) {
       ktab <- knitr::kable(tab[idx, ], digits = 2, format = "html", 
                            caption = ifelse(i > 1, paste(caption, "(continued)"), caption),
-                           format.args = list(big.mark = ","))
+                           col.names = col.names, format.args = list(big.mark = ","))
     } else {
       ktab <- knitr::kable(tab[idx, ], digits = 2, format = "html", align = align,
                            caption = ifelse(i > 1, paste(caption, "(continued)"), caption),
-                           format.args = list(big.mark = ","))
+                           col.names = col.names, format.args = list(big.mark = ","))
     }
     
     ktab %>%
@@ -80,4 +80,20 @@ print_tab <- function(tab, n_rows = 25, add_row = 3, caption = "", full_width = 
       break_page_asis()
     }
   }
+}
+
+
+#' @importFrom grDevices col2rgb
+#' @export
+col2hex <- function(col) {
+  if (length(grep("^#[[:xdigit:]]{6}$", col)) > 0) {
+    return(col)
+  }
+  
+  col %>% 
+    tolower() %>% 
+    grDevices::col2rgb() %>% 
+    "/"(255) %>% 
+    t() %>% 
+    rgb()
 }

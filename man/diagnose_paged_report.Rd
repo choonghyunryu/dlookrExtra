@@ -12,6 +12,7 @@ diagnose_paged_report(
   browse = TRUE,
   title = "Data Diagnosis Report",
   subtitle = deparse(substitute(.data)),
+  author = "dlookr",
   abstract_title = "Report Overview",
   abstract = NULL,
   title_color = "white",
@@ -22,8 +23,10 @@ diagnose_paged_report(
   flag_content_minus = TRUE,
   flag_content_missing = TRUE,
   cover_img = NULL,
+  create_date = Sys.time(),
   logo_img = NULL,
   theme = c("orange", "blue")[1],
+  sample_percent = 100,
   ...
 )
 }
@@ -44,6 +47,8 @@ you needed Chrome web browser on computer.
 \item{title}{character. title of report. default is "Data Diagnosis Report".}
 
 \item{subtitle}{character. subtitle of report. default is name of data.}
+
+\item{author}{character. author of report. default is "dlookr".}
 
 \item{abstract_title}{character. abstract title of report. default is 
 "Report Overview".}
@@ -71,10 +76,17 @@ the default value is TRUE, and the information is displayed.}
 
 \item{cover_img}{character. name of cover image.}
 
+\item{create_date}{Date or POSIXct, character. The date on which the report is generated. 
+The default value is the result of Sys.time().}
+
 \item{logo_img}{character. name of logo image on top right.}
 
 \item{theme}{character. name of theme for report. support "orange" and "blue". 
 default is "orange".}
+
+\item{sample_percent}{numeric. Sample percent of data for performing Diagnosis. 
+It has a value between (0, 100]. 100 means all data, and 5 means 5% of sample data.
+This is useful for data with a large number of observations.}
 
 \item{...}{arguments to be passed to methods.}
 }

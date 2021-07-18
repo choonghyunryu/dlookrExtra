@@ -26,18 +26,10 @@ library(reactable)
 library(htmltools)
 ```
 
-```{r import-data}
+```{r get-parameters}
 reportData <- get("reportData", .dlookrExtraEnv)
-
-# sampling with sample_percent
-N <- nrow(reportData)
-if (sample_percent < 100) {
-  N <- ceiling(nrow(reportData) * sample_percent / 100)
-  idx <- sample(seq(nrow(reportData)), size = N)
-  
-  reportData <- reportData[idx, ]
-}
-
+sample_percent <- get("sample_percent", .dlookrExtraEnv)
+author <- get("author", .dlookrExtraEnv)
 thres_uniq_cat <- get("thres_uniq_cat", .dlookrExtraEnv)
 thres_uniq_num <- get("thres_uniq_num", .dlookrExtraEnv)
 ```
@@ -120,6 +112,14 @@ a {
 ```{r diagose}
 # Number of observations
 N <- NROW(reportData)
+
+# sampling with sample_percent
+if (sample_percent < 100) {
+  N_sample <- ceiling(N * sample_percent / 100)
+  idx <- sample(seq(N), size = N_sample)
+  
+  reportData <- reportData[idx, ]
+}
 
 # solve the overview
 ov <- overview(reportData)
@@ -365,12 +365,12 @@ metrics <- c("dataset" ,"dataset type", "samples", "created", "created by")
 
 value <- c("$dataset$", 
            class(reportData)[1], 
-           paste0(N, " / ", format(NROW(reportData), big.mark = ","), " (",
+           paste0(N_sample, " / ", format(N, big.mark = ","), " (",
                   sample_percent, "%)"),
            "$date$",
            ifelse(author == "", "dlookr", author))
 
-overview <- data.frame(division = division, metrics = metrics, value = value)
+overview <- data.frame(Divisions = division, Metrics = metrics, Values = value)
 ```
 
 ```{r overview, results='asis'}
@@ -387,9 +387,10 @@ tab_right <- ov[10:nrow(ov), ]
 rownames(tab_right) <- seq(nrow(tab_right))
 
 tab_left <- tab_left %>% 
+  mutate(value = ifelse (metrics %in% "observations", N, value)) %>%
   mutate(value = ifelse (metrics %in% "memory size", 
                          ifelse(value / 1024^2 > 0, round(value / 1024^2),
-                                round(value / 1024)), value)) %>%   
+                                round(value / 1024)), value)) %>% 
   mutate(metrics = ifelse (metrics %in% "memory size", 
                          ifelse(value / 1024^2 > 0, "memory size (MB)",
                                 "memory size (KB)"), metrics))
@@ -397,11 +398,13 @@ tab_left <- tab_left %>%
 cap <- "Data Structures"
 knitr::kable(tab_left, digits = 2, caption = cap, format = "html",
              format.args = list(big.mark = ","),
+             col.names = c("Divisions", "Metrics", "Values"),
              table.attr = "style=\"color: hsl(0, 0%, 40%);margin-right:30px !important;\"") %>% 
   kable_styling(full_width = FALSE, font_size = 14, position = "float_left") 
 
 cap <- "Data Types"
 knitr::kable(tab_right, digits = 2, caption = cap, format = "html",
+             col.names = c("Divisions", "Metrics", "Values"),
              format.args = list(big.mark = ","),
              table.attr = "style=\"color: hsl(0, 0%, 40%);margin-right:30px !important;\"") %>% 
   kable_styling(full_width = FALSE, font_size = 14, position = "float_left") 
@@ -539,7 +542,7 @@ break_line_asis(1)
 h2("Visualization", id = "ID-h2-missing-viz", class = "title-h2")
 ```
 
-```{r missing-viz2, dpi=300, fig.height=10, fig.width=10, results='asis'}
+```{r missing-viz2, dpi=400, fig.height=9, fig.width=9, out.width="80%", results='asis'}
 diagn_missing <- diagn_na_unique %>% 
   filter(missing_count > 0)
 

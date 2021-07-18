@@ -47,6 +47,9 @@ Numerical Variables". default is 5.}
 
 \item{logo_img}{character. name of logo image on top right.}
 
+\item{create_date}{Date or POSIXct, character. The date on which the report is generated. 
+The default value is the result of Sys.time().}
+
 \item{theme}{character. name of theme for report. support "orange" and "blue". 
 default is "orange".}
 

@@ -167,11 +167,13 @@ targetVariable <- get("targetVariable", .dlookrExtraEnv)
 sample_percent <- get("sample_percent", .dlookrExtraEnv)
 author <- get("author", .dlookrExtraEnv)
 
+# Number of observations
+N <- NROW(reportData)
+
 # sampling with sample_percent
-N <- nrow(reportData)
 if (sample_percent < 100) {
-  N <- ceiling(nrow(reportData) * sample_percent / 100)
-  idx <- sample(seq(nrow(reportData)), size = N)
+  N_sample <- ceiling(N * sample_percent / 100)
+  idx <- sample(seq(N), size = N_sample)
   
   reportData <- reportData[idx, ]
 }
@@ -212,9 +214,9 @@ info <- c("Dataset" ,"Dataset Type", "Observations", "Variables",
 
 value <- c("$dataset$", 
            class(reportData)[1], 
-           format(NROW(reportData), big.mark = ","),
+           format(N, big.mark = ","),
            NCOL(reportData),
-           paste0(N, " / ", format(NROW(reportData), big.mark = ","), " (",
+           paste0(N_sample, " / ", format(N, big.mark = ","), " (",
                   sample_percent, "%)"),
            "$date$",
            ifelse(author == "", "dlookr", author))

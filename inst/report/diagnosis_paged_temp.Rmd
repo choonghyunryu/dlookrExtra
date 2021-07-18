@@ -39,9 +39,10 @@ library(htmltools)
 library(reactable)
 
 reportData <- get("reportData", .dlookrExtraEnv)
-
-thres_uniq_cat <- $thres_uniq_cat$
-thres_uniq_num <- $thres_uniq_num$  
+sample_percent <- get("sample_percent", .dlookrExtraEnv)
+author <- get("author", .dlookrExtraEnv)
+thres_uniq_cat <- get("thres_uniq_cat", .dlookrExtraEnv)
+thres_uniq_num <- get("thres_uniq_num", .dlookrExtraEnv)
 ```
 
 
@@ -86,6 +87,14 @@ thres_uniq_num <- $thres_uniq_num$
 ```{r diagose}
 # Number of observations
 N <- NROW(reportData)
+
+# sampling with sample_percent
+if (sample_percent < 100) {
+  N_sample <- ceiling(N * sample_percent / 100)
+  idx <- sample(seq(N), size = N_sample)
+  
+  reportData <- reportData[idx, ]
+}
 
 # solve the overview
 ov <- overview(reportData)
@@ -334,6 +343,7 @@ tab_right <- ov[10:nrow(ov), ]
 rownames(tab_right) <- seq(nrow(tab_right))
 
 tab_left <- tab_left %>% 
+  mutate(value = ifelse (metrics %in% "observations", N, value)) %>%   
   mutate(value = ifelse (metrics %in% "memory size", 
                          ifelse(value / 1024^2 > 0, round(value / 1024^2),
                                 round(value / 1024)), value)) %>%   
@@ -353,11 +363,49 @@ knitr::kables(format = "html",
     ),
   caption = "Data Structures and Types") %>% 
   cat()
+```
 
-  break_page_asis()
+## Job Informations
+
+```{r overview-job, results='asis'}
+division <- c("dataset" ,"dataset", "job", "job", "job")
+metrics <- c("dataset" ,"dataset type", "samples", "created", "created by")
+
+value <- c("$dataset$", 
+           class(reportData)[1], 
+           paste0(N_sample, " / ", format(N, big.mark = ","), " (",
+                  sample_percent, "%)"),
+           "$date$",
+           ifelse(author == "", "dlookr", author))
+
+info_job <- data.frame(division = division, metrics = metrics, value = value)
+
+cap <- "Job Informations"
+
+print_tab(info_job, caption = cap)
 ```
 
 ## Warnings
+
+```{r warnings-summary, results='asis'}
+if (NROW(tab_warning) < 1) {
+  html_cat("No warnings")
+} else {
+  tab <- tab_warning %>%
+    count(recommand) %>% 
+    right_join(data.frame(recommand = c("check", "judgement", "remove")),
+               by = "recommand") %>% 
+    tidyr::spread(recommand, n) %>% 
+    mutate_all(function(x) ifelse(is.na(x), 0, x))
+
+  knitr::kable(tab, format = "html", caption = "Summary of Warnings",
+               col.names = c("checks", "judgements", "removes"),
+               format.args = list(big.mark = ",")) %>% 
+    kableExtra::kable_styling(full_width = TRUE, font_size = 14, 
+                              position = "left") %>% 
+      cat()
+}
+```
 
 ```{r warnings, results='asis'}
 tab_warning <- tab_warning %>% 
@@ -366,13 +414,12 @@ tab_warning <- tab_warning %>%
 if (NROW(tab_warning) > 0) {
   cap <- "Warnings in dataset and variables"
   
-  print_tab(tab_warning, caption = cap, n_rows = 25)
+  print_tab(tab_warning, caption = cap, n_rows = 22, add_row = 6)
 } else {
   cat("No warnings in dataset and variables")
   break_page_asis()
 }
 ```
-
 
 ## Variables
 
@@ -392,7 +439,7 @@ html_paged_missing(diagn_na_unique, caption = cap, n_rows = 23, add_row = 5)
 
 ## Visualization
 
-```{r missing-viz, dpi=300, fig.height=10, fig.width=10, results='asis'}
+```{r missing-viz, dpi=400, fig.height=9, fig.width=9, out.width="80%", results='asis'}
 diagn_missing <- diagn_na_unique %>% 
   filter(missing_count > 0)
 
@@ -409,19 +456,21 @@ break_page_asis()
 $content_missing$
 
 # Unique Values
-## Categorical Vaiables 
+## Categorical Vaiables
+
 ```{r unique-date-category, results='asis'}
 html_paged_unique_cat(diagn_na_unique, thres_uniq_cat, n_rows = 25, add_row = 4)  
 ```
 
-## Numerical Variables
+## Numerical Vaiables
+
 ```{r unique-data-numeric, results='asis'}
 html_paged_unique_num(diagn_na_unique, thres_uniq_num, n_rows = 24, add_row = 5)  
 ```
 
-
 # Categorical Variable Diagnosis
 ## Top Ranks
+
 ```{r diagnose-catagory, results='asis'}
 diagn_category <- html_paged_toprank(reportData, top = 10, type = "n")
 
@@ -437,6 +486,7 @@ if (NROW(diagn_category) > 0) {
 
 # Numerical Variable Diagnosis
 ## Distributions
+
 ```{r diagnose-numeric, results='asis'}
 diagn_numeric <- diagnose_numeric(reportData)
 
@@ -452,6 +502,7 @@ if (NROW(diagn_numeric) > 0) {
 
 $content_zero$
 ### Zero Values
+
 ```{r numeric-zero, results='asis'}
 if (NROW(diagn_numeric) > 0) {
   diagn_zero <- diagn_numeric %>%
@@ -476,7 +527,9 @@ if (NROW(diagn_numeric) > 0) {
 $content_zero$
 
 $content_minus$
-### Minus Values
+
+### Negative Values
+
 ```{r numeric-minus, results='asis'}
 if (NROW(diagn_numeric) > 0) {
   diagn_minus <- diagn_numeric %>%
@@ -526,6 +579,7 @@ if (NROW(diagn_numeric) > 0) {
 ```
 
 ### Individual Outliers
+
 ```{r detail-outliers, fig.height=4, fig.width=6, results='asis'}
 if (NROW(diagn_numeric) > 0) {
   diagn_outlier2 <- reportData %>%
