@@ -828,7 +828,7 @@ eda_paged_report <- function(.data, target = NULL, output_format = c("pdf", "htm
     html_out <- rmarkdown::render(paste(path, rmd, sep = "/"))
     pagedown::chrome_print(html_out, output = output_file)
     
-    file.remove(paste(path, html, sep = "/"))
+    # file.remove(paste(path, html, sep = "/"))
   } else {
     rmarkdown::render(paste(path, rmd, sep = "/"), output_file = output_file)
   }

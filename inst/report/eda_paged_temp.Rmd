@@ -170,4 +170,38 @@ html_paged_describe(reportData, caption = cap, font_size = 13)
 html_paged_describe_detail(reportData)
 ```
 
+### Categorical Variables
+
+```{r descriptive-categorical, results='asis'}
+cap <- "Top Rank levels of Categorical Variables"
+
+html_paged_categorical(reportData, caption = cap, font_size = 13)
+```
+
+```{r descriptive-categorical-detail, results='asis', dpi=300, fig.height=5, fig.width=5, out.width="80%"}
+# cap <- "Descriptive Statistics of Categorical Variables"
+html_paged_categorical_detail(reportData)
+```
+
+## Normality Test
+```{r normality, results='asis'}
+cap <- "Descriptive Statistics of Numerical Variables"
+
+html_paged_normality(reportData, caption = cap, font_size = 13)
+```
+
+```{r normality-detail, results='asis', dpi=300, fig.height=5, fig.width=7, out.width="90%"}
+html_paged_normality_detail(reportData)
+```
+
+
+# Bivariate Analysis
+## Compare Numerical Variables
+```{r compare-numerical, results='asis'}
+cap <- "Correlation Coefficient"
+
+html_paged_compare_numerical(reportData, caption = cap, font_size = 13)
+```
+
+## Compare Categorical Variables
 

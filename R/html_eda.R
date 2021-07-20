@@ -1265,3 +1265,350 @@ html_target_correlation <- function(.data, target) {
 }
 
 
+#' @import dplyr
+#' @importFrom dlookr describe
+#' @export
+html_paged_describe <- function(.data, n_rows = 25, add_row = 3, caption = "", 
+                                full_width = TRUE, font_size = 14) {
+  tabs <- .data %>% 
+    dlookr::describe(statistics = c("mean", "sd", "quantiles"),
+                     quantiles = c(0, 0.25, 0.5, 0.75, 1)) %>% 
+    select(-n)
+  
+  colums <- c("variables", "missing", "mean", "sd", "min", "Q1", 
+              "median", "Q3", "max")
+    
+  print_tab(tabs, n_rows = n_rows, add_row = 3, caption = caption, 
+            col.names =  colums, full_width = full_width, font_size = font_size)
+}
+
+
+#' @import dplyr
+#' @importFrom dlookr find_class plot_box_numeric
+#' @importFrom knitr kable
+#' @importFrom kableExtra kable_styling
+#' @export
+html_paged_describe_detail <- function(.data, n_ind = 4, caption = "", 
+                                       full_width = TRUE, font_size = 14) {
+  nums <- .data %>% 
+    dlookr::find_class("numerical", index = FALSE)
+  
+  n_page <- ceiling(length(nums) / n_ind) 
+  
+  for (i in seq(n_page)) {
+    vars_nm <- nums[(((i - 1) * n_ind) + 1):min(i * n_ind, length(nums))]
+    
+    .data %>% 
+      select_at(vars_nm) %>% 
+      plot_box_numeric()
+    
+    break_line_asis(2)
+    
+    col.names <- c("variables", "data types", "distinct", "skewness", 
+                   "kurtosis", "zero", "negative", "outlier")
+    .data %>% 
+      select_at(vars_nm) %>% 
+      dlookr::diagnose() %>%
+      select(variables, types, distinct = unique_count) %>% 
+      left_join(
+        .data %>% 
+          select_at(vars_nm) %>% 
+          dlookr::diagnose_numeric(),
+        by = "variables"
+      ) %>% 
+      left_join(
+        .data %>% 
+          select_at(vars_nm) %>% 
+          dlookr::describe(statistics = c("sd", "skewness", "kurtosis")) %>% 
+          select(-n, -na),
+        by = c("variables" = "variable")) %>% 
+      mutate(skewness = round(skewness, 3),
+             kurtosis = round(kurtosis, 3)) %>% 
+      select(variables:distinct, skewness, kurtosis, zero, 
+             negative = minus, outlier)  %>% 
+      knitr::kable(digits = 2, format = "html", col.names = col.names, 
+                   format.args = list(big.mark = ",")) %>% 
+      kableExtra::kable_styling(full_width = TRUE, font_size = 14, 
+                                position = "left") %>% 
+      gsub("font-size: initial !important;", 
+           "font-size: 12px !important;", .) %>%      
+      cat()
+    
+    break_page_asis()
+  }
+}
+
+
+#' @import dplyr
+#' @importFrom dlookr diagnose_category
+#' @export
+html_paged_categorical <- function(.data, n_rows = 25, add_row = 3, caption = "", 
+                                full_width = TRUE, font_size = 14) {
+  tabs <- .data %>% 
+    dlookr::diagnose_category()
+  
+  colums <- c("variables", "levels", "observations", "frequency", "frequency(%)", "rank")
+  
+  print_tab(tabs, n_rows = n_rows, add_row = 3, caption = caption, 
+            col.names =  colums, full_width = full_width, font_size = font_size)
+}
+
+
+#' @import dplyr
+#' @importFrom dlookr find_class plot_bar_category
+#' @importFrom knitr kable
+#' @importFrom kableExtra kable_styling
+#' @export
+html_paged_categorical_detail <- function(.data, n_ind = 4, caption = "", 
+                                       full_width = TRUE, font_size = 14) {
+  cats <- .data %>% 
+    dlookr::find_class("categorical", index = FALSE)
+  
+  n_page <- ceiling(length(cats) / n_ind) 
+  
+  for (i in seq(n_page)) {
+    vars_nm <- cats[(((i - 1) * n_ind) + 1):min(i * n_ind, length(cats))]
+    
+    .data %>% 
+      select_at(vars_nm) %>% 
+      dlookr::plot_bar_category()
+    
+    break_line_asis(2)
+    
+    col.names <- c("variables", "missing", "missing(%)", "distinct", "distinct ratio")
+    .data %>% 
+      select_at(vars_nm) %>% 
+      dlookr::diagnose() %>%
+      mutate(missing_percent = round(missing_percent, 2)) %>% 
+      mutate(unique_rate = round(unique_rate, 3)) %>% 
+      select(-types) %>% 
+      knitr::kable(format = "html", col.names = col.names, 
+                   format.args = list(big.mark = ",")) %>% 
+      kableExtra::kable_styling(full_width = TRUE, font_size = 14, 
+                                position = "left") %>% 
+      gsub("font-size: initial !important;", 
+           "font-size: 12px !important;", .) %>%      
+      cat()
+    
+    break_page_asis()
+  }
+}
+
+
+#' @import dplyr
+#' @importFrom dlookr describe
+#' @export
+html_paged_normality <- function(.data, n_rows = 25, add_row = 3, caption = "", 
+                                 full_width = TRUE, digits = 1, font_size = 13) {
+  tabs <- dlookr::describe(.data) %>% 
+    select(variable, p00, p25, p50,  p75, p100, skewness, kurtosis) %>% 
+    rename("min" = p00,
+           "max" = p100,
+           "median" = p50,
+           "Q1" = p25,
+           "Q3" = p75) %>% 
+    mutate(balance = case_when(
+      abs(skewness) <= 1.2 ~ "Balanced",
+      skewness > 1.2 ~ "Right-Skewed",
+      skewness < 1.2 ~ "Left-Skewed",
+      is.na(skewness) ~ "Invalid"
+    )) 
+  
+  print_tab(tabs, n_rows = n_rows, add_row = add_row, caption = caption, 
+            full_width = full_width, font_size = font_size, 
+            digits = digits, big_mark = FALSE)
+} 
+
+
+#' @import dplyr
+#' @importFrom  dlookr find_class
+#' @importFrom knitr kable
+#' @importFrom kableExtra kable_styling
+#' @export
+html_paged_normality_detail <- function(.data) {
+  nums <- .data %>% 
+    dlookr::find_class("numerical", index = FALSE)
+  
+  for (nm in nums) {
+    el <- div(h3(nm))
+    cat(as.character(el))
+    
+    flag_sample <- FALSE
+    
+    x <- .data[, nm] %>%
+      .[!is.na(.)]
+    
+    if (length(x) > 5000) {
+      x <- sample(x, size = 5000, replace = TRUE)
+      flag_sample <- TRUE
+    }  
+    
+    if (length(x) == 0) {
+      el <- div(h4("all values are NA"))
+      cat(as.character(el))
+      
+      break_page_asis()
+      
+      next
+    } else if (length(x) < 3L || length(unique(x)) < 3L) {
+      el <- div(h4("(unique) sample size must be greater then 3"))
+      cat(as.character(el))
+      
+      break_page_asis()
+      
+      next
+    } else if (diff(range(x, na.rm = TRUE)) == 0) {
+      el <- div(h4("all values are identical"))
+      cat(as.character(el))
+      
+      break_page_asis()
+      
+      next
+    } else {
+      y <- shapiro.test(x)
+      statistic <- round(y$statistic, 5)
+      p_value <- y$p.value
+      
+      data.frame(statistic = statistic,
+                 p_value = p_value,
+                 remark = ifelse(flag_sample, "5000 samples", "No sample"),
+                 row.names = NULL) %>% 
+        dplyr::mutate_if(is.numeric, function(x) {
+          as.character(signif(x, digits = 5))
+        }) %>%
+        knitr::kable(format = "html", digits = 7, align = "rrl",
+                     caption = "Shapiro-Wilk normality test") %>% 
+        kableExtra::kable_styling(full_width = FALSE, font_size = 14, 
+                                  position = "center") %>% 
+        gsub("font-size: initial !important;", 
+             "font-size: 12px !important;", .) %>%
+        cat()
+      
+      break_line_asis(1)
+      
+      if (is.factor(x)) x <- as.numeric(x)
+      
+      if (sum(x < 0, na.rm = TRUE) > 0) {
+        type <- c("original", "log+a transformation", "Box-Cox transformation")
+        
+        skew <- c(skewness(x, na.rm = TRUE),
+                  skewness(get_transform(x, "log+a"), na.rm = TRUE),
+                  skewness(get_transform(x, "Box-Cox"), na.rm = TRUE))
+        
+        kurt <- c(kurtosis(x, na.rm = TRUE),
+                  kurtosis(get_transform(x, "log+a"), na.rm = TRUE),
+                  kurtosis(get_transform(x, "Box-Cox"), na.rm = TRUE))          
+      } else {
+        if (any(x == 0, na.rm = TRUE)) {
+          type <- c("original", "log+1 transformation", "sqrt transformation")
+          
+          skew <- c(skewness(x, na.rm = TRUE),
+                    skewness(get_transform(x, "log+1"), na.rm = TRUE),
+                    skewness(sqrt(x), na.rm = TRUE))
+          
+          kurt <- c(kurtosis(x, na.rm = TRUE),
+                    kurtosis(get_transform(x, "log+1"), na.rm = TRUE),
+                    kurtosis(sqrt(x), na.rm = TRUE))         
+        } else {
+          type <- c("original", "log transformation", "sqrt transformation")
+          
+          skew <- c(skewness(x, na.rm = TRUE),
+                    skewness(log(x), na.rm = TRUE),
+                    skewness(sqrt(x), na.rm = TRUE))
+          
+          kurt <- c(kurtosis(x, na.rm = TRUE),
+                    kurtosis(log(x), na.rm = TRUE),
+                    kurtosis(sqrt(x), na.rm = TRUE)) 
+        }
+      }
+      
+      data.frame(type = type, 
+                 skewness = round(skew, 4), 
+                 kurtosis = round(kurt, 4)) %>% 
+        knitr::kable(format = "html", caption = "skewness and kurtosis") %>% 
+        kableExtra::kable_styling(full_width = FALSE, font_size = 14, 
+                                  position = "center") %>%
+        gsub("font-size: initial !important;", 
+             "font-size: 12px !important;", .) %>% 
+        cat()
+      
+      break_line_asis(1)
+      
+      x <- data.frame(x)
+      
+      if (sum(x < 0, na.rm = TRUE) > 0) {
+        plot_normality(x, x, left = "log+a", right = "Box-Cox")
+      } else {
+        if (any(x == 0, na.rm = TRUE)) 
+          plot_normality(x, x, left = "log+1", right = "sqrt")
+        else
+          plot_normality(x, x)
+      }
+      
+      break_page_asis()
+    }    
+  }
+} 
+
+
+#' @import dplyr
+#' @importFrom  dlookr compare_numeric
+#' @importFrom knitr kable
+#' @importFrom kableExtra kable_styling
+#' @importFrom htmltools div h3
+#' @export
+html_paged_compare_numerical <- function(.data, n_rows = 25, add_row = 3, 
+                                         caption = "Correlation Coefficient", 
+                                         full_width = TRUE, digits = 5, 
+                                         font_size = 13) {
+  idx <- .data %>% 
+    find_class("numerical")
+  
+  if (length(idx) < 2) {
+    return("The number of numerical variables is less than 2.")
+  }
+  
+  num_compares <-  compare_numeric(.data)
+  
+  tabs <- num_compares$correlation %>% 
+    rename("first variable" = var1,
+           "second variable" = var2,
+           "correlation coefficient" = coef_corr) 
+  
+  caption <- "correlation coefficient"
+
+  print_tab(tabs, n_rows = n_rows, add_row = add_row, caption = caption, 
+            full_width = full_width, font_size = font_size, 
+            digits = digits, big_mark = FALSE)
+  
+  df_linear <- num_compares$linear
+  
+  for (i in seq(NROW(df_linear))) {
+    el <- div(h3(paste0(df_linear[i, "var1"], " vs ", df_linear[i, "var2"])))
+    cat(as.character(el))
+    
+    df_linear[i, ] %>% 
+      select(-logLik, -AIC, -BIC, -deviance, -df.residual, -nobs) %>% 
+      rename("first variable" = var1,
+             "second variable" = var2) %>% 
+      knitr::kable(format = "html", caption = "correlation coefficient") %>% 
+      kableExtra::kable_styling(full_width = TRUE, font_size = font_size, 
+                                position = "left") %>%
+      gsub("font-size: initial !important;", 
+           "font-size: 12px !important;", .) %>% 
+      cat() 
+    
+    break_line_asis(1)
+    
+    num_compare <- num_compares
+    
+    vars <- attr(num_compare, "combination")[i, ]
+    attr(num_compare, "raw") <- attr(num_compare, "raw")[, vars]
+    attr(num_compare, "combination") <- vars %>% t()
+
+    plot(num_compare)
+    
+    break_page_asis()
+  }  
+}
+
