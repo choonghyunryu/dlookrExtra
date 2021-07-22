@@ -204,4 +204,48 @@ html_paged_compare_numerical(reportData, caption = cap, font_size = 13)
 ```
 
 ## Compare Categorical Variables
+```{r compare-categorical, results='asis', dpi=300, fig.height=5, fig.width=5, out.width="70%"}
+cap <- "Chisqure-Test"
+
+html_paged_compare_categorical(reportData, caption = cap, font_size = 13)
+```
+
+# Multivariate Analysis
+## Correlation Analysis
+### Correlation Coefficient Matrix
+
+```{r correlation, results='asis'}
+html_paged_correlation(reportData) 
+```
+
+### Correlation Plot
+
+```{r plot-correlation, results='asis', dpi=300, fig.height=5, fig.width=5, out.width="85%"}
+if (length(idx.numeric) < 2) {
+  htmltools::h5("The number of numerical variables is less than 2.")
+} else {
+  dlookr::plot_correlate(reportData)  
+}
+
+break_page_asis()
+```
+
+# Target based Analysis
+## Grouped Numerical Variables
+
+```{r group-numerical, results='asis', dpi=400, fig.height=5, fig.width=7, out.width="85%"}
+html_paged_target_numerical(reportData, targetVariable)  
+```
+
+## Grouped Categorical Variables
+
+```{r group-categorical, results='asis', dpi=400, fig.height=6, fig.width=7, out.width="85%"}
+html_paged_target_categorical(reportData, targetVariable)  
+```
+
+## Grouped Correlation
+
+```{r group-correlation, results='asis', dpi=400, fig.height=6, fig.width=6, out.width="95%"}
+html_paged_target_correlation(reportData, targetVariable)  
+```
 

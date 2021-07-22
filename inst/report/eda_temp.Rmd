@@ -286,21 +286,21 @@ h1("Bivariate Analysis", id = "ID-h1-bivariate", class = "title-h1")
 ```
 
 ```{r, results='asis'}
-h2("Compare Categorical Variables", id = "ID-h2-compare-categorical", class = "title-h2")
-```
-
-```{r compare_category, results='asis'}
-html_compare_category(reportData)
-
-break_line_asis(1)
-```
-
-```{r, results='asis'}
 h2("Compare Numerical Variables", id = "ID-h2-compare-numerical", class = "title-h2")
 ```
 
 ```{r compare_numerical, results='asis'}
 html_compare_numerical(reportData)
+
+break_line_asis(1)
+```
+
+```{r, results='asis'}
+h2("Compare Categorical Variables", id = "ID-h2-compare-categorical", class = "title-h2")
+```
+
+```{r compare_category, results='asis'}
+html_compare_category(reportData)
 
 break_line_asis(1)
 ```
