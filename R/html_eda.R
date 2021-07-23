@@ -616,8 +616,7 @@ html_compare_category <- function(.data, n_cells = 20, n_levels = 10) {
     purrr::map_int(
       function(x) levels(.data[, x]) %>% 
         length()
-    ) %>% 
-    "<="(n_levels) %>% 
+    ) <= n_levels %>% 
     which() %>% 
     idx[.]
   

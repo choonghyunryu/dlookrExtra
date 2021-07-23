@@ -59,7 +59,8 @@ print_tab <- function(tab, n_rows = 25, add_row = 3, caption = "",
       idx <- intersect(seq(N), seq(n_rows))
     } else {
       idx <- (max(idx) + 1):(max(idx) + n_rows + add_row) %>% 
-        pmin(N) 
+        pmin(N) %>% 
+        unique()
     }
     
     if (is.null(align)) {
@@ -107,8 +108,7 @@ col2hex <- function(col) {
   
   col %>% 
     tolower() %>% 
-    grDevices::col2rgb() %>% 
-    "/"(255) %>% 
+    grDevices::col2rgb() / 255 %>% 
     t() %>% 
     rgb()
 }

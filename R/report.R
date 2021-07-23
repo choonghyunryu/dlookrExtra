@@ -842,8 +842,6 @@ eda_paged_report <- function(.data, target = NULL, output_format = c("pdf", "htm
 
 
 
-
-
 #' @importFrom rmarkdown render
 #' @importFrom knitr image_uri
 #' @export
@@ -966,6 +964,146 @@ transformation_report <- function(.data, target = NULL, output_file = NULL,
   
   file.remove(paste(path, rmd, sep = "/"))
   file.remove(paste(path, header, sep = "/"))  
+  
+  if (browse & file.exists(output_file)) {
+    browseURL(output_file)
+  }
+}
+
+
+
+#' @importFrom rmarkdown render
+#' @importFrom pagedown chrome_print
+#' @importFrom knitr image_uri
+#' @export
+transformation_paged_report <- function(.data, target = NULL, 
+                             output_format = c("pdf", "html"),
+                             output_file = NULL, output_dir = tempdir(),   
+                             browse = TRUE, title = "Transformation Report",
+                             subtitle = deparse(substitute(.data)), author = "dlookr",
+                             abstract_title = "Report Overview", abstract = NULL,
+                             title_color = "white", subtitle_color = "gold",
+                             cover_img = NULL, create_date = Sys.time(),
+                             logo_img = NULL, theme = c("orange", "blue")[1],
+                             sample_percent = 100, ...) {
+  output_format <- match.arg(output_format)
+  
+  if (sample_percent > 100 | sample_percent <= 0) {
+    stop("sample_percent must be a value between (0, 100].")
+  }
+  
+  tryCatch(vars <- tidyselect::vars_select(names(.data),
+                                           !! rlang::enquo(target)),
+           error = function(e) {
+             pram <- as.character(substitute(target))
+             stop(sprintf("Column %s is unknown", pram))
+           },
+           finally = NULL)
+  
+  assign("reportData", as.data.frame(.data), .dlookrExtraEnv)
+  assign("targetVariable", vars, .dlookrExtraEnv)  
+  assign("sample_percent", sample_percent, .dlookrExtraEnv)  
+  assign("author", author, .dlookrExtraEnv)  
+  
+  path <- output_dir
+  
+  rmd   <- "transformation_paged_temp.Rmd"
+  html  <- "transformation_paged_temp.html"
+  cover <- "cover3.jpg"
+  logo  <- "dlookr.svg"  
+  
+  if (is.null(output_file))
+    output_file <- paste("Transformation_Paged_Report", output_format, sep = ".")
+  output_file <- paste(path, output_file, sep = "/")
+  
+  #--Copy files ----------------------------------------------------------------
+  # copy markdown
+  rmd_file <- file.path(system.file(package = "dlookrExtra"), "report", rmd)
+  flag <- file.copy(from = rmd_file, to = path, recursive = TRUE)
+  
+  #--Store parameters ----------------------------------------------------------  
+  # store theme
+  rmd_content <- sub("\\$theme\\$", theme, readLines(paste(path, rmd, sep = "/")))
+  cat(rmd_content, file = paste(path, rmd, sep = "/"), sep = "\n")
+  
+  # store title
+  rmd_content <- sub("\\$title\\$", title, readLines(paste(path, rmd, sep = "/")))
+  cat(rmd_content, file = paste(path, rmd, sep = "/"), sep = "\n")
+  
+  # store subtitle
+  rmd_content <- sub("\\$subtitle\\$", subtitle, 
+                     readLines(paste(path, rmd, sep = "/")))
+  cat(rmd_content, file = paste(path, rmd, sep = "/"), sep = "\n")
+  
+  # store abstract-title
+  rmd_content <- sub("\\$abstract_title\\$", abstract_title, 
+                     readLines(paste(path, rmd, sep = "/")))
+  cat(rmd_content, file = paste(path, rmd, sep = "/"), sep = "\n")  
+  
+  # store abstract
+  if (is.null(abstract)) {
+    abstract <- sprintf("This report was created for the transformation of ***%s*** data. 
+                        It helps to  impute missing values and outliers, resolve skewed data, 
+                        and categorize continuous variables into categorical variables.", 
+                        deparse(substitute(.data)))
+  }
+  rmd_content <- sub("\\$abstract\\$", abstract, 
+                     readLines(paste(path, rmd, sep = "/")))
+  cat(rmd_content, file = paste(path, rmd, sep = "/"), sep = "\n")  
+  
+  # store title color
+  title_color <- col2hex(title_color)
+  rmd_content <- sub("\\$title_color\\$", title_color, readLines(paste(path, rmd, sep = "/")))
+  cat(rmd_content, file = paste(path, rmd, sep = "/"), sep = "\n")
+  
+  # store subtitle color
+  subtitle_color <- col2hex(subtitle_color)
+  rmd_content <- sub("\\$subtitle_color\\$", subtitle_color, 
+                     readLines(paste(path, rmd, sep = "/")))
+  cat(rmd_content, file = paste(path, rmd, sep = "/"), sep = "\n")
+  
+  # store dataset
+  rmd_content <- sub("\\$dataset\\$", deparse(substitute(.data)), 
+                     readLines(paste(path, rmd, sep = "/")))
+  cat(rmd_content, file = paste(path, rmd, sep = "/"), sep = "\n")   
+  
+  # store created date
+  rmd_content <- sub("\\$date\\$", create_date, 
+                     readLines(paste(path, rmd, sep = "/")))
+  cat(rmd_content, file = paste(path, rmd, sep = "/"), sep = "\n")   
+  
+  # store logo image
+  if (is.null(logo_img)) {
+    logo_file <- file.path(system.file(package = "dlookrExtra"), "report", logo)
+    base64_logo <- knitr::image_uri(logo_file)
+  } else {
+    base64_logo <- knitr::image_uri(logo_img)
+  }
+  rmd_content <- sub("\\$logo\\$", base64_logo, 
+                     readLines(paste(path, rmd, sep = "/")))
+  cat(rmd_content, file = paste(path, rmd, sep = "/"), sep = "\n")   
+  
+  # store cover image
+  if (is.null(cover_img)) {
+    cover_file <- file.path(system.file(package = "dlookrExtra"), "report", cover)
+    base64_cover <- knitr::image_uri(cover_file)
+  } else {
+    base64_cover <- knitr::image_uri(cover_img)
+  }
+  rmd_content <- sub("\\$cover\\$", base64_cover, 
+                     readLines(paste(path, rmd, sep = "/")))
+  cat(rmd_content, file = paste(path, rmd, sep = "/"), sep = "\n")     
+  
+  if (output_format == "pdf") {
+    html_out <- rmarkdown::render(paste(path, rmd, sep = "/"))
+    pagedown::chrome_print(html_out, output = output_file, timeout = 90)
+    
+    file.remove(paste(path, html, sep = "/"))
+  } else {
+    rmarkdown::render(paste(path, rmd, sep = "/"), output_file = output_file)
+  }
+  
+  file.remove(paste(path, rmd, sep = "/"))
   
   if (browse & file.exists(output_file)) {
     browseURL(output_file)

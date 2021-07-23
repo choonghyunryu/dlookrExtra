@@ -433,6 +433,7 @@ html_impute_outlier <- function(.data) {
   }
 }
 
+
 #' @importFrom shiny tabsetPanel tabPanel
 #' @importFrom htmltools plotTag
 #' @import dplyr
@@ -815,7 +816,7 @@ html_optimal_binning <- function(.data, target) {
                 shiny::tabPanel("Distribution", p_dist,
                                 hr(style = "border-top: 1px solid black;"),
                                 style = "padding-top:5px; padding-bottom:25px;"), 
-                shiny::tabPanel("Frequency Table", tab_bins,
+                shiny::tabPanel("Binning Table", tab_bins,
                                 hr(style = "border-top: 1px solid black;"),
                                 style = "padding-top:5px; padding-bottom:25px;")
               )
@@ -826,4 +827,530 @@ html_optimal_binning <- function(.data, target) {
   }
 }  
 
+
+
+
+#' @import dplyr
+#' @importFrom dlookr find_na get_class
+#' @importFrom knitr kable
+#' @importFrom kableExtra kable_styling add_header_above
+#' @export
+html_paged_impute_missing <- function(.data, target = NULL, full_width = TRUE, 
+                                      font_size = 13) {
+  numerics <- c("mean", "median", "mode", "knn", "rpart", "mice")
+  categories <- c("mode", "rpart", "mice")
+  
+  n_na <- .data %>% 
+    sapply(function(x) sum(is.na(x))) %>% 
+    .[. > 0]
+  
+  if (length(n_na) > 0) {
+    data_type <- get_class(.data)
+    
+    tab_missing <- n_na %>% 
+      tibble::as_tibble() %>% 
+      mutate(variable = names(n_na)) %>% 
+      rename("missing" = value) %>% 
+      bind_cols(n = NROW(.data)) %>% 
+      mutate(rate_missing = missing / n) %>% 
+      inner_join(data_type, by = "variable") %>% 
+      select(variable, class, n, missing, rate_missing) 
+    
+    nm_cols <- c("variables", "data types", "observations", "missing", "missing(%)")
+    
+    caption <- "Information of Missing Values"
+    
+    tab_missing %>% 
+      knitr::kable(format = "html", digits = 2, caption = caption,
+                   col.names = nm_cols) %>% 
+      kableExtra::kable_styling(full_width = full_width, font_size = font_size, 
+                                position = "left") %>%
+      cat() 
+    
+    break_page_asis()
+    
+    for (i in seq(NROW(tab_missing))) {
+      variable <- tab_missing$variable[i]
+      type <- tab_missing$class[i] %>% 
+        as.character()
+      
+      el <- div(h3(variable))
+      cat(as.character(el))
+      
+      if (type %in% c("integer", "numeric")) {
+        method <- numerics
+      } else if (type %in% c("factor", "ordered")) {
+        method <- categories
+      }
+      
+      if (is.null(target)) {
+        method <- setdiff(method, c("knn", "rpart", "mice"))
+      } else {
+        method <- method
+      }
+      
+      imputes <- method %>% 
+        lapply(function(x) {
+          if (is.null(target)) {
+            imputate_na(.data, all_of(variable), all_of(target), method = x, 
+                        print_flag = FALSE)
+          } else {
+            imputate_na(.data, all_of(variable),  method = x, 
+                        print_flag = FALSE)
+          }
+        })
+      
+      p_compare <- imputes %>% 
+        lapply(function(x) {
+            plot(x)
+        })
+      
+      suppressMessages({
+        mat <- imputes %>% 
+          purrr::map_dfc(function(x) {
+            summary_imputation(x) %>% 
+              as.data.frame()
+          })
+      })
+      
+      if (type %in% c("integer", "numeric")) {
+        drops <- seq(ncol(mat))[seq(ncol(mat)) %% 2 == 1][-1]
+        mat <- mat[, -c(drops)]
+        names(mat) <- c("original", paste("inpute", method, sep = "_"))
+        
+        nm_cols <- c("mean", "standard devation", "IQR", "min", "Q1", "median", "Q3",
+                     "max", "skewness", "kurtosis")
+        
+        tab_compare <- mat %>% 
+          t() %>% 
+          as.data.frame() %>% 
+          select(mean, sd, IQR, p00, p25, p50,  p75, p100, skewness, kurtosis) 
+        
+        for (j in seq(length(method))) {
+          el <- div(h4(paste0(variable, " - ", method[j])))
+          cat(as.character(el))
+          
+          print(p_compare[[j]])
+          
+          break_line_asis(1)
+          
+          caption <- paste0("Distribution with ", method[j], " method")
+          
+          tab_compare[c(1, j + 1), ] %>% 
+            knitr::kable(format = "html", digits = 2, caption = caption,
+                         col.names = nm_cols) %>% 
+            kableExtra::kable_styling(full_width = full_width, font_size = font_size, 
+                                      position = "left") %>%
+            cat() 
+          
+          break_page_asis()
+        }
+      } else if (type %in% c("factor", "ordered")) {
+        drops <- seq(ncol(mat))[seq(ncol(mat)) %% 4 != 2][-1]
+        mat <- mat[, -c(drops)]
+        names(mat) <- c("original", paste("inpute", method, sep = "_"))
+        
+        tab_compare <- mat %>% 
+          t() %>% 
+          as.data.frame()
+        
+        names(tab_compare)[ncol(tab_compare)] <- "<Missing>"
+        
+        tab_compare_rate <- tab_compare / rowSums(tab_compare)
+        
+        for (j in seq(length(method))) {
+          el <- div(h4(paste0(variable, " - ", method[j])))
+          cat(as.character(el))
+          
+          print(p_compare[[j]])
+          
+          break_line_asis(1)
+          
+          caption <- paste0("Contingency Table with ", method[j], " method")
+          
+          header_above <- c(1, NCOL(tab_compare))
+          names(header_above) <- c("imputation method", target)
+          
+          tab_compare[c(1, j + 1), ] %>% 
+            knitr::kable(format = "html", caption = caption,
+                         format.args = list(big.mark = ",")) %>% 
+            kableExtra::add_header_above(header_above) %>% 
+            kableExtra::kable_styling(full_width = full_width, font_size = font_size, 
+                                      position = "left") %>%
+            cat() 
+          
+          break_line_asis(1)
+          
+          caption <- paste0("Relate Contingency Table with ", method[j], " method")
+          
+          tab_compare_rate[c(1, j + 1), ] %>% 
+            knitr::kable(format = "html", digits = 2, caption = caption) %>% 
+            kableExtra::add_header_above(header_above) %>% 
+            kableExtra::kable_styling(full_width = full_width, font_size = font_size, 
+                                      position = "left") %>%
+            cat() 
+          
+          break_page_asis()
+        }
+      }  
+    }  
+  } else {
+    h5("There are no variables in the dataset with missing values.")
+  }
+}
+
+
+#' @import dplyr
+#' @import reactable
+#' @importFrom dlookr diagnose_numeric imputate_na
+#' @importFrom knitr kable
+#' @importFrom kableExtra kable_styling add_header_above
+#' @export
+html_paged_impute_outlier <- function(.data, full_width = TRUE, font_size = 13) {
+  method <- c("mean", "median", "mode", "capping")
+  
+  n <- nrow(.data)
+  outlist <- find_outliers(.data, index = FALSE)
+  
+  if (length(outlist) > 0) {
+    tab_outlier <- .data %>% 
+      select_at(outlist) %>% 
+      dlookr::diagnose_numeric() %>% 
+      mutate(n = n) %>% 
+      mutate(rate_outlier = outlier / n) %>% 
+      select(variables, n, min, max, outlier, rate_outlier) 
+    
+    nm_cols <- c("variables", "observations", "min", "max", "outlier", "outlier(%)")
+    
+    caption <- "Information of Outliers"
+    
+    tab_outlier %>% 
+      knitr::kable(format = "html", digits = 2, caption = caption,
+                   col.names = nm_cols) %>% 
+      kableExtra::kable_styling(full_width = full_width, font_size = font_size, 
+                                position = "left") %>%
+      cat() 
+    
+    break_page_asis()
+    
+    for (i in seq(NROW(tab_outlier))) {
+      variable <- tab_outlier$variables[i]
+      
+      el <- div(h3(variable))
+      cat(as.character(el))
+      
+      imputes <- method %>% 
+        lapply(function(x) {
+          dlookr::imputate_outlier(.data, all_of(variable),  method = x)
+        })
+      
+      p_compare <- imputes %>% 
+        lapply(function(x) {
+            plot(x)
+        })
+      
+      suppressMessages({
+        mat <- imputes %>% 
+          purrr::map_dfc(function(x) {
+            summary_imputation(x) %>% 
+              as.data.frame()
+          })
+      }) 
+  
+      drops <- seq(ncol(mat))[seq(ncol(mat)) %% 2 == 1][-1]
+      mat <- mat[, -c(drops)]
+      names(mat) <- c("original", paste("inpute", method, sep = "_"))
+      
+      tab_compare <- mat %>% 
+        t() %>% 
+        as.data.frame() %>% 
+        select(mean, sd, IQR, p00, p25, p50,  p75, p100, skewness, kurtosis) 
+      
+      nm_cols <- c("mean", "standard devation", "IQR", "min", "Q1", "median", "Q3",
+                   "max", "skewness", "kurtosis")
+      
+      for (j in seq(length(method))) {
+        el <- div(h4(paste0(variable, " - ", method[j])))
+        cat(as.character(el))
+        
+        print(p_compare[[j]])
+        
+        break_line_asis(1)
+        
+        caption <- paste0("Distribution with ", method[j], " method")
+        
+        tab_compare[c(1, j + 1), ] %>% 
+          knitr::kable(format = "html", digits = 2, caption = caption,
+                       col.names = nm_cols) %>% 
+          kableExtra::kable_styling(full_width = full_width, font_size = font_size, 
+                                    position = "left") %>%
+          cat() 
+        
+        break_page_asis()
+      }
+    } 
+  } else {
+    h5("There are no variables in the dataset with outliers.")
+  }
+}
+
+
+#' @import dplyr
+#' @importFrom dlookr describe transform
+#' @importFrom knitr kable
+#' @importFrom kableExtra kable_styling 
+#' @export
+html_paged_resolve_skewness <- function(.data, full_width = TRUE, font_size = 13) {
+  skewlist <- find_skewness(.data, index = FALSE)
+  
+  if (length(skewlist) > 0) {
+    tab_skewness <- .data %>% 
+      select_at(skewlist) %>% 
+      dlookr::describe(statistics = c("quantiles", "skewness"),
+                       quantiles = c(0, 0.25, 0.5, 0.75, 1)) %>% 
+      select(variable, p00:p100, skewness)
+    
+    nm_cols <- c("variables", "min", "Q1", "median", "Q3", "max", "skewness")
+    
+    caption <- "Information of Skewness"
+    
+    tab_skewness %>% 
+      knitr::kable(format = "html", digits = 2, caption = caption,
+                   col.names = nm_cols) %>% 
+      kableExtra::kable_styling(full_width = full_width, font_size = font_size, 
+                                position = "left") %>%
+      cat() 
+    
+    break_page_asis()
+    
+    for (i in seq(NROW(tab_skewness))) {
+      variable <- tab_skewness$variable[i]
+      
+      el <- div(h3(variable))
+      cat(as.character(el))
+      
+      skewness <- tab_skewness$skewness[i] 
+      
+      if (skewness <= 0) {
+        method <- c("1/x", "x^2", "x^3", "Box-Cox")
+      } else {
+        method <- c("log", "log+1", "sqrt", "Box-Cox")
+      }
+      
+      resolve <- method %>% 
+        lapply(function(x) {
+          dlookr::transform(pull(.data, variable),  method = x)
+        })
+      
+      # p_compare <- resolve %>% 
+      #   lapply(function(x) {
+      #       plot(x)
+      #   })
+      
+      suppressMessages({
+        mat <- resolve %>% 
+          purrr::map_dfc(function(x) {
+            summary_transform(x) %>% 
+              as.data.frame()
+          })
+      }) 
+      
+      drops <- seq(ncol(mat))[seq(ncol(mat)) %% 2 == 1][-1]
+      mat <- mat[, -c(drops)]
+      names(mat) <- c("original", paste("transform", method, sep = "_"))
+      
+      tab_compare <- mat %>% 
+        t() %>% 
+        as.data.frame() %>% 
+        select(IQR, p00, p25, p50,  p75, p100, skewness, kurtosis)
+      
+      nm_cols <- c("IQR", "min", "Q1", "median", "Q3",
+                   "max", "skewness", "kurtosis")
+      
+      for (j in seq(length(method))) {
+        el <- div(h4(paste0(variable, " - ", method[j])))
+        cat(as.character(el))
+        
+        plot(resolve[[j]])
+        
+        break_line_asis(1)
+        
+        caption <- paste0("Distribution with ", method[j], " method")
+        
+        tab_compare[c(1, j + 1), ] %>% 
+          knitr::kable(format = "html", digits = 2, caption = caption,
+                       col.names = nm_cols) %>% 
+          kableExtra::kable_styling(full_width = full_width, font_size = font_size, 
+                                    position = "left") %>%
+          cat() 
+        
+        break_page_asis()
+      }
+    }  
+  } else {
+    h5("There are no variables including skewed.")
+  }
+}  
+
+
+#' @import dplyr
+#' @importFrom dlookr diagnose binning
+#' @importFrom knitr kable
+#' @importFrom kableExtra kable_styling 
+#' @export
+html_paged_binning <- function(.data, full_width = TRUE, font_size = 13) {
+  method <- c("quantile", "equal", "pretty", "kmeans", "bclust")
+  
+  numlist <- find_class(.data, "numerical", index = FALSE)
+  
+  if (length(numlist) > 0) {
+    tab_numerical <- .data %>% 
+      select_at(numlist) %>% 
+      dlookr::diagnose() %>% 
+      full_join(data.frame(method = method, stringsAsFactors = FALSE),
+                by = character()) %>% 
+      select(variables, types, unique_count, unique_rate, method)
+    
+    options(show.error.messages = FALSE)
+    
+    bins <- seq(nrow(tab_numerical)) %>% 
+      lapply(function(x) {
+        binn <- try(dlookr::binning(pull(.data, tab_numerical$variables[x]), 
+                                    type = tab_numerical$method[x]),
+                    silent = TRUE)
+        if (class(binn) == "try-error") {
+          return(NULL) 
+        } else {
+          return(binn)
+        }  
+      })
+    
+    options(show.error.messages = TRUE)
+    
+    tab_numerical$n_bins <- bins %>% 
+      sapply(function(x) attr(x, "levels") %>% length)
+    
+    nm_cols <- c("variables", "data types", "unique", "unique rate", 
+                 "binning method", "bins")
+    
+    caption <- "Information of Binnings"
+    
+    print_tab(tab_numerical, n_rows = 30, add_row = 3, caption = caption, 
+              full_width = TRUE, font_size = 13, col.names = nm_cols, 
+              digits = 3, big_mark = TRUE)
+    
+    variable_before <- ""
+    
+    for (i in seq(NROW(tab_numerical))) {
+      variable <- tab_numerical$variables[i]
+      
+      if (variable_before != variable) {
+        el <- div(h3(variable))
+        cat(as.character(el))
+      }
+
+      variable_before <- variable
+      
+      el <- div(h4(paste0(variable, " - ", tab_numerical[i, 5])))
+      cat(as.character(el))
+      
+      plot(bins[[i]])
+      
+      break_line_asis(1)
+      
+      nm_cols <- c("bins", "frequency", "frequency(%)")
+      
+      summary(bins[[i]]) %>% 
+        knitr::kable(format = "html", digits = 2, caption = caption,
+                     col.names = nm_cols) %>% 
+        kableExtra::kable_styling(full_width = full_width, font_size = font_size, 
+                                  position = "left") %>%
+        cat() 
+      
+      break_page_asis()      
+    }  
+  } else {
+    h5("There are no numerical variables.")
+  }
+}  
+
+
+
+#' @importFrom purrr map_int
+#' @import dplyr
+#' @importFrom dlookr diagnose binning_by
+#' @importFrom knitr kable
+#' @importFrom kableExtra kable_styling 
+#' @export
+html_paged_optimal_binning <- function(.data, target, full_width = TRUE, 
+                                       font_size = 13) {
+  numlist <- find_class(.data, "numerical", index = FALSE)
+  
+  if (!target %in% names(.data)) {
+    h5(paste0("The target variable ", target, " is not in the data."))
+  } else if (length(numlist) == 0) {
+    h5("There are no numerical variables.")
+  } else {
+    n_levles <- length(table(pull(.data, target)))
+    
+    if (n_levles != 2) {
+      h5("The target variable is not a binary class.")
+    } else {
+      tab_numerical <- .data %>% 
+        select_at(numlist) %>% 
+        dlookr::diagnose() %>% 
+        select(-missing_count, -missing_percent)
+      
+      # Optimal Binning for Scoring Modeling
+      bins <- lapply(numlist, function(x)
+        binning_by(.data, y = target, x = all_of(x), p = 0.05))
+      
+      success <- ifelse(sapply(bins, is.character),
+                        "No significant splits", "Success")
+      
+      tab_numerical <- tab_numerical %>% bind_cols(
+        data.frame(success = success))
+      
+      tab_numerical$n_bins <- bins %>% 
+        purrr::map_int(function(x) {
+          attr(x, "levels") %>% length
+        })  
+      
+      nm_cols <- c("variables", "data types", "unique", "unique rate", 
+                   "success", "bins")
+      
+      caption <- "Information of Optimal Binnings"
+      
+      print_tab(tab_numerical, n_rows = 30, add_row = 3, caption = caption, 
+                full_width = TRUE, font_size = 13, col.names = nm_cols, 
+                digits = 3, big_mark = TRUE)
+      
+      for (i in seq(NROW(tab_numerical))) {
+        if (tab_numerical$n_bins[i] == 0) {
+          next
+        }
+        
+        variable <- tab_numerical$variables[i]
+
+        el <- div(h3(variable))
+        cat(as.character(el))
+        
+        plot(bins[[i]])
+        
+        break_line_asis(1)
+        
+        caption <- "Binning Table with Performance Metrics"
+        
+        attr(bins[[i]], "performance") %>% 
+          select(-CntCumPos, -CntCumNeg, -RateCumPos, -RateCumNeg) %>%
+          knitr::kable(format = "html", digits = 2, caption = caption) %>% 
+          kableExtra::kable_styling(full_width = full_width, font_size = font_size, 
+                                    position = "left") %>%
+          cat() 
+          
+        break_page_asis()
+      }  
+    }  
+  }
+}  
 

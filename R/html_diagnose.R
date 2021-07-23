@@ -626,15 +626,13 @@ html_outlier <- function(.data, theme = c("orange", "blue")[1]) {
       flag_lower <- list_outlier %>% 
         filter(variables %in% x) %>% 
         select(Q1) %>% 
-        pull() %>% 
-        ">"(outs) %>% 
+        pull() > outs %>% 
         any()
       
       flag_upper <- list_outlier %>% 
         filter(variables %in% x) %>% 
         select(Q3) %>% 
-        pull() %>% 
-        "<"(outs) %>% 
+        pull() < outs %>% 
         any()
       
       position <- ifelse(flag_lower & flag_upper, "Both", 

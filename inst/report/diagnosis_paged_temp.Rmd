@@ -94,6 +94,8 @@ if (sample_percent < 100) {
   idx <- sample(seq(N), size = N_sample)
   
   reportData <- reportData[idx, ]
+} else {
+  N_sample <- N
 }
 
 # solve the overview

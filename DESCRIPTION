@@ -14,7 +14,7 @@ Depends:
 Imports: 
     dlookr,
     rmarkdown,
-    pagedown,
+    pagedown (>= 0.15),
     htmltools,
     knitr
 Author: Choonghyun Ryu [aut, cre]
