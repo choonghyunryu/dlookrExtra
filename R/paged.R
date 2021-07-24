@@ -1,3 +1,15 @@
+#' @importFrom htmltools div
+#' @export
+html_cat <- function(msg, id = paste0("ID", runif(1))) {
+  htmltools::div(class = "caption", 
+                 id = id,
+                 style = "padding-top: 8px; padding-bottom: 8px; color: #777777; 
+                 text-align: left;", msg) %>% 
+      as.character() %>% 
+      cat()
+}
+
+
 #' @name break_page
 #' @rdname break_page
 #' @title Breaking pages in HTML
@@ -33,8 +45,8 @@ break_page_asis <- function() {
 #' @export
 break_line_asis <- function(n = 1) {
   for (i in seq(n)) {
-    htmltools::br() %>% 
-      as.character() %>% 
+    htmltools::br() %>%
+      as.character() %>%
       cat()
   }
 }
@@ -106,9 +118,10 @@ col2hex <- function(col) {
     return(col)
   }
   
-  col %>% 
+  mat_rgb <- col %>% 
     tolower() %>% 
-    grDevices::col2rgb() / 255 %>% 
-    t() %>% 
-    rgb()
+    grDevices::col2rgb() %>% 
+    t() / 255 
+  
+  rgb(mat_rgb)
 }

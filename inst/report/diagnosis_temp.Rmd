@@ -519,6 +519,9 @@ h2("Variables", id = "ID-h2-variables", class = "title-h2")
 ```
 
 ```{r variables, results='asis'}
+cap <- "Diagnostic overview of individual variables"
+html_cat(cap)
+
 html_variable(reportData, theme = "$theme$")
 
 break_line_asis(2)
@@ -532,7 +535,7 @@ h1("Missing Values", id = "ID-h1-missing", class = "title-h1")
 h2("List of Missing Values", id = "ID-h2-missing-value", class = "title-h2")
 ```
 
-```{r missing_data, comment="", results='asis'}
+```{r missing-data, comment="", results='asis'}
 html_missing(diagn_na_unique)
 
 break_line_asis(1)
@@ -547,6 +550,9 @@ diagn_missing <- diagn_na_unique %>%
   filter(missing_count > 0)
 
 if (NROW(diagn_missing) > 0) {
+  cap <- "Interaction of variables including missing values"
+  html_cat(cap)
+
   break_line_asis(1)
   plot_na_intersect(reportData)
 } else {
@@ -565,7 +571,7 @@ h1("Unique Values", id = "ID-h1-uniq-value", class = "title-h1")
 h2("Categorical Vaiables", id = "ID-h2-uniq-categorical", class = "title-h2")
 ```
 
-```{r unique_date_category, comment="", results='asis'}
+```{r unique-date-category, comment="", results='asis'}
 html_unique_cat(diagn_na_unique, thres_uniq_cat)  
 
 break_line_asis(1)
@@ -575,7 +581,7 @@ break_line_asis(1)
 h2("Numarical Vaiables", id = "ID-h2-uniq-numerical", class = "title-h2")
 ```
 
-```{r unique_data_numeric, comment="", results='asis'}
+```{r unique-data-numeric, comment="", results='asis'}
 html_unique_num(diagn_na_unique, thres_uniq_num)  
 
 break_line_asis(1)

@@ -1,14 +1,3 @@
-#' @importFrom htmltools div
-#' @export
-html_cat <- function(msg, id = paste0("ID", runif(1))) {
-  htmltools::div(class = "caption", 
-                 id = id,
-                 style = "padding-top: 8px; padding-bottom: 8px; color: #777777; 
-                 text-align: left;", msg) %>% 
-    as.character() %>% 
-    cat()
-}
-
 #' @importFrom shiny icon
 #' @importFrom htmltools div
 #' @export
@@ -515,7 +504,7 @@ html_missing <- function(tab, grade = c("Good" = 0.05, "OK" = 0.1,
       ))
     }
     
-    #c("#D9EF8B", "#FEE08B", "#FDAE61", "#F46D43", "#D73027")  
+    # c("#D9EF8B", "#FEE08B", "#FDAE61", "#F46D43", "#D73027")  
     reactable(
       diagn_missing,
       defaultColDef = colDef(style = "font-size: 14px;color: hsl(0, 0%, 40%);"),
@@ -546,7 +535,7 @@ html_missing <- function(tab, grade = c("Good" = 0.05, "OK" = 0.1,
     )
     
   } else {
-    html_cat("No variables including missing values")
+    h5("No variables including missing values")
     break_line_asis(1)
   }
 }
@@ -585,7 +574,7 @@ html_paged_missing <- function(tab, grade = c("Good" = 0.05, "OK" = 0.1,
               full_width = full_width, font_size = font_size, align = "lrrll")
 
   } else {
-    html_cat("No variables including missing values")
+    h5("No variables including missing values")
     break_line_asis(1)
   }
 }

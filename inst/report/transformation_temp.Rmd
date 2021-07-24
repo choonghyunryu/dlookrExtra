@@ -187,52 +187,76 @@ if (length(targetVariable) == 0) targetVariable <- NULL
 
 # sampling with sample_percent
 N <- nrow(reportData)
+
+# solve the overview
+ov <- overview(reportData)
+
 if (sample_percent < 100) {
-  N <- ceiling(nrow(reportData) * sample_percent / 100)
-  idx <- sample(seq(nrow(reportData)), size = N)
+  N_sample <- ceiling(N * sample_percent / 100)
+  idx <- sample(seq(N), size = N_sample)
   
   reportData <- reportData[idx, ]
+} else {
+  N_sample <- N
 }
 
 ```
 
 ```{r create-overview}
-info <- c("Dataset" ,"Dataset Type", "Observations", "Variables", 
-          "Samples", "Created", "Created by")
+division <- c("dataset" ,"dataset" ,"dataset", "job", "job", "job")
+metrics <- c("dataset" ,"dataset type", "target", "samples", 
+             "created", "created by")
 
 value <- c("$dataset$", 
            class(reportData)[1], 
-           format(NROW(reportData), big.mark = ","),
-           NCOL(reportData),
-           paste0(N, " / ", format(NROW(reportData), big.mark = ","), " (",
+           ifelse(is.null(targetVariable), "not defied", targetVariable),
+           paste0(N_sample, " / ", format(N, big.mark = ","), " (",
                   sample_percent, "%)"),
            "$date$",
            ifelse(author == "", "dlookr", author))
 
-overview <- data.frame(information = info, value = value)
-```
-
-```{r, results='asis'}
-h1("Overview", id = "ID-h1-overview", class = "title-h1")
+overview <- data.frame(Divisions = division, Metrics = metrics, Values = value)
 ```
 
 ```{r overview, results='asis'}
-overview %>% 
-  reactable(
-    defaultColDef = colDef(style = "font-size: 14px;color: hsl(0, 0%, 40%);"),
-    fullWidth = FALSE,
-    columns = list(
-      information = colDef(
-        name = "Informations",
-        width = 150,
-        style = "font-weight: 600;font-size: 14px;color: hsl(0, 0%, 40%);"
-      ),
-      value = colDef(
-        name = "Values",
-         width = 250
-      )
-    )
-  )
+h1("Overview", id = "ID-h1-overview", class = "title-h1")
+```
+
+```{r overview-pre, results='asis'}
+tab_left <- ov[1:9, ]
+tab_right <- ov[10:nrow(ov), ]
+rownames(tab_right) <- seq(nrow(tab_right))
+
+tab_left <- tab_left %>% 
+  mutate(value = ifelse (metrics %in% "observations", N, value)) %>%
+  mutate(value = ifelse (metrics %in% "memory size", 
+                         ifelse(value / 1024^2 > 0, round(value / 1024^2),
+                                round(value / 1024)), value)) %>% 
+  mutate(metrics = ifelse (metrics %in% "memory size", 
+                         ifelse(value / 1024^2 > 0, "memory size (MB)",
+                                "memory size (KB)"), metrics))
+
+cap <- "Data Structures"
+knitr::kable(tab_left, digits = 2, caption = cap, format = "html",
+             format.args = list(big.mark = ","),
+             col.names = c("Divisions", "Metrics", "Values"),
+             table.attr = "style=\"color: hsl(0, 0%, 40%);margin-right:30px !important;\"") %>% 
+  kable_styling(full_width = FALSE, font_size = 14, position = "float_left") 
+
+cap <- "Data Types"
+knitr::kable(tab_right, digits = 2, caption = cap, format = "html",
+             col.names = c("Divisions", "Metrics", "Values"),
+             format.args = list(big.mark = ","),
+             table.attr = "style=\"color: hsl(0, 0%, 40%);margin-right:30px !important;\"") %>% 
+  kable_styling(full_width = FALSE, font_size = 14, position = "float_left") 
+
+cap <- "Job Informations"
+knitr::kable(overview, caption = cap, format = "html",
+             table.attr = "style=\"color: hsl(0, 0%, 40%);\"") %>% 
+  kable_styling(full_width = FALSE, font_size = 14, position = "left") 
+
+breaks <- 9 - nrow(overview) + 2
+break_line_asis(breaks)
 ```
 
 ```{r, results='asis'}
@@ -249,6 +273,7 @@ h2("Missing Values", id = "ID-h2-missing", class = "title-h2")
 
 ```{r nalist, results='asis'}
 html_impute_missing(reportData, targetVariable)
+break_line_asis(1)
 ```
 
 ```{r, results='asis'}
@@ -257,6 +282,7 @@ h2("Outliers", id = "ID-h2-outlier", class = "title-h2")
 
 ```{r outlist, results='asis'}
 html_impute_outlier(reportData)
+break_line_asis(1)
 ```
 
 ```{r, results='asis'}
@@ -265,6 +291,7 @@ h1("Resolving Skewness", id = "ID-h1-skewness", class = "title-h1")
 
 ```{r skweness, results='asis'}
 html_resolve_skewness(reportData)
+break_line_asis(1)
 ```
 
 ```{r, results='asis'}
@@ -273,14 +300,19 @@ h1("Binning", id = "ID-h1-binning", class = "title-h1")
 
 ```{r binning, results='asis'}
 html_binning(reportData)
+break_line_asis(1)
 ```
 
 ```{r, results='asis'}
-h1("Optimal Binning", id = "ID-h1-optimal-binning", class = "title-h1")
+if (!is.null(targetVariable)) {
+  h1("Optimal Binning", id = "ID-h1-optimal-binning", class = "title-h1")
+}
 ```
 
 ```{r optimal-binning, results='asis'}
-html_optimal_binning(reportData, targetVariable)
+if (!is.null(targetVariable)) {
+  html_optimal_binning(reportData, targetVariable)
+}
 ```
 
 

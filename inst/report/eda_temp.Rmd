@@ -170,6 +170,9 @@ author <- get("author", .dlookrExtraEnv)
 # Number of observations
 N <- NROW(reportData)
 
+# solve the overview
+ov <- overview(reportData)
+
 # sampling with sample_percent
 if (sample_percent < 100) {
   N_sample <- ceiling(N * sample_percent / 100)
@@ -209,46 +212,60 @@ idx.numeric <- idx.numeric[apply(as.data.frame(reportData[, idx.numeric]), 2,
 ```
 
 ```{r create-overview}
-info <- c("Dataset" ,"Dataset Type", "Observations", "Variables", 
-          "Samples", "Created", "Created by")
+division <- c("dataset" ,"dataset" ,"dataset", "job", "job", "job")
+metrics <- c("dataset" ,"dataset type", "target", "samples", 
+             "created", "created by")
 
 value <- c("$dataset$", 
            class(reportData)[1], 
-           format(N, big.mark = ","),
-           NCOL(reportData),
+           ifelse(is.null(targetVariable), "not defied", targetVariable),
            paste0(N_sample, " / ", format(N, big.mark = ","), " (",
                   sample_percent, "%)"),
            "$date$",
            ifelse(author == "", "dlookr", author))
 
-overview <- data.frame(information = info, value = value)
-```
-
-```{r, results='asis'}
-h1("Overview", id = "ID-h1-overview", class = "title-h1")
+overview <- data.frame(Divisions = division, Metrics = metrics, Values = value)
 ```
 
 ```{r overview, results='asis'}
-overview %>% 
-  reactable(
-    defaultColDef = colDef(style = "font-size: 14px;color: hsl(0, 0%, 40%);"),
-    fullWidth = FALSE,
-    columns = list(
-      information = colDef(
-        name = "Informations",
-        width = 150,
-        style = "font-weight: 600;font-size: 14px;color: hsl(0, 0%, 40%);"
-      ),
-      value = colDef(
-        name = "Values",
-         width = 250
-      )
-    )
-  )
+h1("Overview", id = "ID-h1-overview", class = "title-h1")
 ```
 
-```{r, results='asis'}
-break_line_asis(1)
+```{r overview-pre, results='asis'}
+tab_left <- ov[1:9, ]
+tab_right <- ov[10:nrow(ov), ]
+rownames(tab_right) <- seq(nrow(tab_right))
+
+tab_left <- tab_left %>% 
+  mutate(value = ifelse (metrics %in% "observations", N, value)) %>%
+  mutate(value = ifelse (metrics %in% "memory size", 
+                         ifelse(value / 1024^2 > 0, round(value / 1024^2),
+                                round(value / 1024)), value)) %>% 
+  mutate(metrics = ifelse (metrics %in% "memory size", 
+                         ifelse(value / 1024^2 > 0, "memory size (MB)",
+                                "memory size (KB)"), metrics))
+
+cap <- "Data Structures"
+knitr::kable(tab_left, digits = 2, caption = cap, format = "html",
+             format.args = list(big.mark = ","),
+             col.names = c("Divisions", "Metrics", "Values"),
+             table.attr = "style=\"color: hsl(0, 0%, 40%);margin-right:30px !important;\"") %>% 
+  kable_styling(full_width = FALSE, font_size = 14, position = "float_left") 
+
+cap <- "Data Types"
+knitr::kable(tab_right, digits = 2, caption = cap, format = "html",
+             col.names = c("Divisions", "Metrics", "Values"),
+             format.args = list(big.mark = ","),
+             table.attr = "style=\"color: hsl(0, 0%, 40%);margin-right:30px !important;\"") %>% 
+  kable_styling(full_width = FALSE, font_size = 14, position = "float_left") 
+
+cap <- "Job Informations"
+knitr::kable(overview, caption = cap, format = "html",
+             table.attr = "style=\"color: hsl(0, 0%, 40%);\"") %>% 
+  kable_styling(full_width = FALSE, font_size = 14, position = "left") 
+
+breaks <- 9 - nrow(overview) + 2
+break_line_asis(breaks)
 ```
 
 ```{r, results='asis'}
@@ -274,8 +291,7 @@ if (length(idx.numeric) > 0) {
   reportData %>% 
     html_normality(theme = "$theme$")
 } else {
-  html_cat("No numerical variable")
-  break_line_asis(1)
+  h5("No numerical variable")
 }
 
 break_line_asis(1)
@@ -299,7 +315,7 @@ break_line_asis(1)
 h2("Compare Categorical Variables", id = "ID-h2-compare-categorical", class = "title-h2")
 ```
 
-```{r compare_category, results='asis'}
+```{r compare-category, results='asis'}
 html_compare_category(reportData)
 
 break_line_asis(1)
@@ -327,10 +343,13 @@ break_line_asis(1)
 h3("Correlation Plot", id = "ID-h3-correlation-plot", class = "title-h3")
 ```
 
-```{r plot_correlation, results='asis'}
+```{r plot-correlation, results='asis'}
 if (length(idx.numeric) < 2) {
   htmltools::h5("The number of numerical variables is less than 2.")
 } else {
+  cap <- "Correlation coefficient matrix plot"
+  html_cat(cap)
+  
   dlookr::plot_correlate(reportData)  
 }
 
@@ -349,14 +368,18 @@ if (!is.null(targetVariable))
   h2("Grouped Numerical Variables", id = "ID-h2-group-numerical", class = "title-h2")
 ```
 
-```{r group_numerical, results='asis'}
+```{r group-numerical, results='asis'}
 if (!is.null(targetVariable)) {
+  cap <- "Relationship between two numerical variables by level of target variable"
+  html_cat(cap)
+  
   content <- html_target_numerical(reportData, target = targetVariable)
 } else {
   content <- HTML("")
 }  
 
 content
+
 if (!is.null(targetVariable)) {
   break_line_asis(1)
 }  
@@ -367,14 +390,18 @@ if (!is.null(targetVariable))
   h2("Grouped Categorical Variables", id = "ID-h2-group-categorical", class = "title-h2")
 ```
 
-```{r group_categorical, results='asis'}
+```{r group-categorical, results='asis'}
 if (!is.null(targetVariable)) {
+  cap <- "Relationship between two categorical variables by level of target variable"
+  html_cat(cap)
+  
   content <- html_target_categorical(reportData, target = targetVariable)
 } else {
   content <- HTML("")
 }
 
 content
+
 if (!is.null(targetVariable)) {
   break_line_asis(1)
 }  
@@ -386,16 +413,18 @@ if (!is.null(targetVariable))
   h2("Grouped Correlation", id = "ID-h2-group-correlation", class = "title-h2")
 ```
 
-```{r group_correlation, results='asis'}
+```{r group-correlation, results='asis'}
 if (!is.null(targetVariable)) {
+  cap <- "Correlation by level of target variable"
+  html_cat(cap)
+  
   content <- html_target_correlation(reportData, target = targetVariable)
 } else {
   content <- HTML("")
 }
 
 content
+
 break_line_asis(1)
 ```
-
-
 

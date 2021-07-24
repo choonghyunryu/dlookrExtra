@@ -113,11 +113,13 @@ knitr::kables(format = "html",
 ## Job Informations
 
 ```{r overview-job, results='asis'}
-division <- c("dataset" ,"dataset", "job", "job", "job")
-metrics <- c("dataset" ,"dataset type", "samples", "created", "created by")
+division <- c("dataset" ,"dataset" ,"dataset", "job", "job", "job")
+metrics <- c("dataset" ,"dataset type", "target", "samples", 
+             "created", "created by")
 
 value <- c("$dataset$", 
            class(reportData)[1], 
+           ifelse(is.null(targetVariable), "not defied", targetVariable),
            paste0(N_sample, " / ", format(N, big.mark = ","), " (",
                   sample_percent, "%)"),
            "$date$",

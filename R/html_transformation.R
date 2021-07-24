@@ -101,6 +101,9 @@ html_impute_missing <- function(.data, target = NULL) {
       inner_join(data_type, by = "variable") %>% 
       select(variable, class, n, missing, rate_missing) 
     
+    cap <- "Information about impute missing values"
+    html_cat(cap)
+    
     tab_missing %>% 
       reactable(
         defaultColDef = colDef(style = "font-size: 14px;color: hsl(0, 0%, 40%);"),
@@ -314,6 +317,9 @@ html_impute_outlier <- function(.data) {
       mutate(rate_outlier = outlier / n) %>% 
       select(variables, n, min, max, outlier, rate_outlier) 
     
+    cap <- "Information about impute outliers"
+    html_cat(cap)
+    
     tab_outlier %>% 
       reactable(
         defaultColDef = colDef(style = "font-size: 14px;color: hsl(0, 0%, 40%);"),
@@ -449,6 +455,9 @@ html_resolve_skewness <- function(.data) {
       dlookr::describe(statistics = c("quantiles", "skewness"),
                        quantiles = c(0, 0.25, 0.5, 0.75, 1)) %>% 
       select(variable, p00:p100, skewness)
+    
+    cap <- "Information about resolve skewness"
+    html_cat(cap)
     
     tab_skewness %>% 
       reactable(
@@ -599,6 +608,9 @@ html_binning <- function(.data) {
   numlist <- find_class(.data, "numerical", index = FALSE)
   
   if (length(numlist) > 0) {
+    cap <- "Binning information for numeric variables"
+    html_cat(cap)
+    
     tab_numerical <- .data %>% 
       select_at(numlist) %>% 
       dlookr::diagnose() %>% 
@@ -717,7 +729,9 @@ html_binning <- function(.data) {
 html_optimal_binning <- function(.data, target) {
   numlist <- find_class(.data, "numerical", index = FALSE)
   
-  if (!target %in% names(.data)) {
+  if (is.null(target)) {
+    h5("The target variable is not defied.")    
+  } else if (!target %in% names(.data)) {
     h5(paste0("The target variable ", target, " is not in the data."))
   } else if (length(numlist) == 0) {
     h5("There are no numerical variables.")
@@ -746,6 +760,9 @@ html_optimal_binning <- function(.data, target) {
         purrr::map_int(function(x) {
           attr(x, "levels") %>% length
         })  
+      
+      cap <- "Optimal binning information for numeric variables with target variable"
+      html_cat(cap)
       
       tab_numerical %>% 
         reactable(
@@ -1286,7 +1303,9 @@ html_paged_optimal_binning <- function(.data, target, full_width = TRUE,
                                        font_size = 13) {
   numlist <- find_class(.data, "numerical", index = FALSE)
   
-  if (!target %in% names(.data)) {
+  if (is.null(target)) {
+    h5("The target variable is not defied.")    
+  } else if (!target %in% names(.data)) {
     h5(paste0("The target variable ", target, " is not in the data."))
   } else if (length(numlist) == 0) {
     h5("There are no numerical variables.")

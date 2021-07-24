@@ -195,7 +195,8 @@ diagnose_report <- function(.data, output_file = NULL, output_dir = tempdir(),
                      readLines(paste(path, header, sep = "/")))
   cat(header_content, file = paste(path, header, sep = "/"), sep = "\n")
   
-  # rendering
+  #--Rendering------------------------------------------------------------------    
+  grDevices::graphics.off()
   rmarkdown::render(paste(path, rmd, sep = "/"), output_file = output_file)
 
   file.remove(paste(path, rmd, sep = "/"))
@@ -692,6 +693,7 @@ eda_report <- function(.data, target = NULL, output_file = NULL,
   cat(header_content, file = paste(path, header, sep = "/"), sep = "\n")
   
   #--Rendering------------------------------------------------------------------    
+  grDevices::graphics.off()
   rmarkdown::render(paste(path, rmd, sep = "/"), output_file = output_file)
   
   file.remove(paste(path, rmd, sep = "/"))
@@ -919,7 +921,7 @@ transformation_report <- function(.data, target = NULL, output_file = NULL,
   cat(header_content, file = paste(path, header, sep = "/"), sep = "\n")
   
   # store title color
-  subtitle_color <- col2hex(subtitle_color)
+  title_color <- col2hex(title_color)
   rmd_content <- sub("\\$title_color\\$", title_color, readLines(paste(path, rmd, sep = "/")))
   cat(rmd_content, file = paste(path, rmd, sep = "/"), sep = "\n")
   
@@ -960,6 +962,7 @@ transformation_report <- function(.data, target = NULL, output_file = NULL,
   cat(header_content, file = paste(path, header, sep = "/"), sep = "\n")
   
   #--Rendering------------------------------------------------------------------    
+  grDevices::graphics.off()  
   rmarkdown::render(paste(path, rmd, sep = "/"), output_file = output_file)
   
   file.remove(paste(path, rmd, sep = "/"))

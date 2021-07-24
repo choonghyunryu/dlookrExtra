@@ -25,6 +25,9 @@ html_descriptive <- function(.data) {
            skewness = round(skewness, 3),
            kurtosis = round(kurtosis, 3))
   
+  cap <- "Descriptive statistics and visualization of individual variables"
+  html_cat(cap)
+  
   raws %>% 
     reactable(
       columns = list(
@@ -350,7 +353,10 @@ html_normality <- function(.data, theme = c("orange", "blue")[1]) {
     )) %>% 
     mutate(mean = round(mean, 2))
   
-    describe_num %>% 
+  cap <- "Normality test results of numeric variables"
+  html_cat(cap)
+  
+  describe_num %>% 
     reactable(
       defaultColDef = colDef(style = "font-size: 14px;color: hsl(0, 0%, 40%);"),
       columns = list(
@@ -609,230 +615,128 @@ html_compare_category <- function(.data, n_cells = 20, n_levels = 10) {
     find_class("categorical")
   
   if (length(idx) < 2) {
-    return("The number of categorical variables is less than 2.")
-  }
-  
-  idx_target <- idx %>%
-    purrr::map_int(
-      function(x) levels(.data[, x]) %>% 
-        length()
-    ) <= n_levels %>% 
-    which() %>% 
-    idx[.]
-  
-  if (length(idx_target) < 2) {
-    return("The valid categorical variables is less than 2.")
-  }
-  
-  cat_compares <-  compare_category(.data[, idx_target]) 
-  tabs <- summary(cat_compares, "all", marginal = TRUE, na.rm = FALSE, 
-                  verbose = FALSE)
-  tab_compare <- tabs$chisq %>% 
-    filter(df <= n_cells) %>% 
-    filter(!is.nan(statistic))
-  
-  tab_compare %>% 
-    select(1, 2, 5, 3, 4) %>% 
-    reactable(
-      defaultColDef = colDef(style = "font-size: 14px;color: hsl(0, 0%, 40%);"),
-      columns = list (
-        variable_1 = colDef(
-          name = "First Variable"
-        ),
-        variable_2 = colDef(
-          name = "Second Variable"
-        ),
-        df = colDef(
-          name = "Degree of Freedom"
-        ),
-        statistic = colDef(
-          name = "Statistic",
-          format = colFormat(digits = 2)
-        ),
-        p.value = colDef(
-          name = "P-Value",
-          format = colFormat(digits = 5)
-        )         
-      ),
-      details = function(index) {
-        ctable <- tabs$table[[index]]
-        
-        contingency <- function(tab, relate = FALSE) {
-          dname <-  tab %>% dimnames()
-          dframe <- tab %>% data.frame()
-          
-          if (relate) {
-            dframe <- round(dframe / dframe[nrow(dframe), ncol(dframe)] * 100, 2)
-          }
-          
-          rownames(dframe) <- tab %>% 
-            rownames() %>% 
-            ifelse(is.na(.), "<NA>", .)
-          
-          rname <- dname %>% names() %>% "["(1)
-          varname <- ifelse(is.na(dname[[2]]), "<NA>", dname[[2]])
-          
-          colum_list <- seq(ncol(dframe)) %>% 
-            lapply(function(x) {
-              colDef(
-                name = varname[x],
-                format = colFormat(
-                  separators = TRUE
-                ),
+    h5("The number of categorical variables is less than 2.")
+  } else {
+    is_under_n <- idx %>%
+      purrr::map_int(
+        function(x) levels(.data[, x]) %>% 
+          length()
+      ) <= n_levels 
+    
+    idx_target <- is_under_n %>% 
+      which() %>% 
+      idx[.]
+    
+    if (length(idx_target) < 2) {
+      h5("The valid categorical variables is less than 2.")
+    } else {
+      cat_compares <-  compare_category(.data[, idx_target]) 
+      tabs <- summary(cat_compares, "all", marginal = TRUE, na.rm = FALSE, 
+                      verbose = FALSE)
+      tab_compare <- tabs$chisq %>% 
+        filter(df <= n_cells) %>% 
+        filter(!is.nan(statistic))
+      
+      cap <- "Relationship between two categorical variables"
+      html_cat(cap)
+      
+      tab_compare %>% 
+        select(1, 2, 5, 3, 4) %>% 
+        reactable(
+          defaultColDef = colDef(style = "font-size: 14px;color: hsl(0, 0%, 40%);"),
+          columns = list (
+            variable_1 = colDef(
+              name = "First Variable"
+            ),
+            variable_2 = colDef(
+              name = "Second Variable"
+            ),
+            df = colDef(
+              name = "Degree of Freedom"
+            ),
+            statistic = colDef(
+              name = "Statistic",
+              format = colFormat(digits = 2)
+            ),
+            p.value = colDef(
+              name = "P-Value",
+              format = colFormat(digits = 5)
+            )         
+          ),
+          details = function(index) {
+            ctable <- tabs$table[[index]]
+            
+            contingency <- function(tab, relate = FALSE) {
+              dname <-  tab %>% dimnames()
+              dframe <- tab %>% data.frame()
+              
+              if (relate) {
+                dframe <- round(dframe / dframe[nrow(dframe), ncol(dframe)] * 100, 2)
+              }
+              
+              rownames(dframe) <- tab %>% 
+                rownames() %>% 
+                ifelse(is.na(.), "<NA>", .)
+              
+              rname <- dname %>% names() %>% "["(1)
+              varname <- ifelse(is.na(dname[[2]]), "<NA>", dname[[2]])
+              
+              colum_list <- seq(ncol(dframe)) %>% 
+                lapply(function(x) {
+                  colDef(
+                    name = varname[x],
+                    format = colFormat(
+                      separators = TRUE
+                    ),
+                    sortable = FALSE
+                  )
+                }) 
+              names(colum_list) <- names(dframe)
+              
+              colum_list[[".rownames"]] <- colDef(
+                name = rname, 
+                style = "fontWeight: 'bold';",
                 sortable = FALSE
               )
-            }) 
-          names(colum_list) <- names(dframe)
-          
-          colum_list[[".rownames"]] <- colDef(
-            name = rname, 
-            style = "fontWeight: 'bold';",
-            sortable = FALSE
-          )
-          
-          cname <- list(
-            colGroup(name = dname %>% names() %>% "["(2), 
-                     columns = names(dframe))
-          )
-          
-          dframe %>% 
-            reactable(
-              defaultColDef = colDef(style = "font-size: 14px;color: hsl(0, 0%, 40%);"),
-              columns = colum_list,
-              columnGroups = cname
-            )
-        }
-        
-        x <- ctable %>% dimnames() %>% names() %>% "["(1)
-        y <- ctable %>% dimnames() %>% names() %>% "["(2)
-        idx_nm <- paste(x, y, sep = " vs ")
-        
-        p_compare <- htmltools::plotTag({
-          plot_compare(x, y, cat_compares[[idx_nm]])
-        }, sprintf("A plot of the %s variable", idx_nm), width = 600,
-        height = 400, device = grDevices::png)
-        
-        shiny::tabsetPanel(
-          shiny::tabPanel("Mosaics Plot", p_compare,
-                          hr(style = "border-top: 1px solid black;"),
-                          style = "padding-top:5px; padding-bottom:25px;"),
-          shiny::tabPanel("Contingency Table", contingency(ctable),
-                          hr(style = "border-top: 1px solid black;"),
-                          style = "padding-top:5px; padding-bottom:25px;"),
-          shiny::tabPanel("Relative Contingency Table", contingency(ctable, TRUE),
-                          hr(style = "border-top: 1px solid black;"),
-                          style = "padding-top:5px; padding-bottom:25px;")          
-        )        
-      }  
-    )
-}
-
-
-#' @importFrom shiny icon tabsetPanel tabPanel
-#' @importFrom dlookr compare_category
-#' @importFrom purrr map_int
-#' @importFrom hrbrthemes theme_ipsum
-#' @import reactable
-#' @import dplyr
-#' @import htmltools
-#' @export
-html_compare_numerical <- function(.data) {
-  idx <- .data %>% 
-    find_class("numerical")
-  
-  if (length(idx) < 2) {
-    return("The number of numerical variables is less than 2.")
+              
+              cname <- list(
+                colGroup(name = dname %>% names() %>% "["(2), 
+                         columns = names(dframe))
+              )
+              
+              dframe %>% 
+                reactable(
+                  defaultColDef = colDef(style = "font-size: 14px;color: hsl(0, 0%, 40%);"),
+                  columns = colum_list,
+                  columnGroups = cname
+                )
+            }
+            
+            x <- ctable %>% dimnames() %>% names() %>% "["(1)
+            y <- ctable %>% dimnames() %>% names() %>% "["(2)
+            idx_nm <- paste(x, y, sep = " vs ")
+            
+            p_compare <- htmltools::plotTag({
+              plot_compare(x, y, cat_compares[[idx_nm]])
+            }, sprintf("A plot of the %s variable", idx_nm), width = 600,
+            height = 400, device = grDevices::png)
+            
+            shiny::tabsetPanel(
+              shiny::tabPanel("Mosaics Plot", p_compare,
+                              hr(style = "border-top: 1px solid black;"),
+                              style = "padding-top:5px; padding-bottom:25px;"),
+              shiny::tabPanel("Contingency Table", contingency(ctable),
+                              hr(style = "border-top: 1px solid black;"),
+                              style = "padding-top:5px; padding-bottom:25px;"),
+              shiny::tabPanel("Relative Contingency Table", contingency(ctable, TRUE),
+                              hr(style = "border-top: 1px solid black;"),
+                              style = "padding-top:5px; padding-bottom:25px;")          
+            )        
+          }  
+        )      
+    }
   }
-  
-  num_compares <-  compare_numeric(.data)
-  
-  num_compares$correlation %>% 
-    reactable(
-      defaultColDef = colDef(style = "font-size: 14px;color: hsl(0, 0%, 40%);"),
-      columns = list (
-        var1 = colDef(
-          name = "First Variable"
-        ),
-        var2 = colDef(
-          name = "Second Variable"
-        ),
-        coef_corr = colDef(
-          name = "Correlation Coefficient",
-          format = colFormat(
-            digits = 5
-          )
-        )       
-      ),
-      details = function(index) {
-        tab_model <- num_compares$linear[index, ] %>% 
-          select(-logLik, -AIC, -BIC, -deviance, -df.residual, -nobs) %>% 
-          reactable(
-            defaultColDef = colDef(style = "font-size: 14px;color: hsl(0, 0%, 40%);"),
-            columns = list(
-              var1 = colDef(
-                name = "First Variable"
-              ),
-              var2 = colDef(
-                name = "Second Variable"
-              ),
-              r.squared = colDef(
-                format = colFormat(
-                  digits = 3
-                )
-              ),
-              adj.r.squared = colDef(
-                format = colFormat(
-                  digits = 3
-                )
-              ),
-              sigma = colDef(
-                width = 100,
-                format = colFormat(
-                  digits = 2
-                )
-              ),
-              statistic = colDef(
-                width = 100,
-                format = colFormat(
-                  digits = 4
-                )
-              ),
-              p.value = colDef(
-                width = 100,
-                format = colFormat(
-                  digits = 4
-                )
-              ),
-              df = colDef(
-                width = 50
-              )              
-            )
-          )
-        
-        num_compare <- num_compares
-  
-        vars <- attr(num_compare, "combination")[index, ]
-        attr(num_compare, "raw") <- attr(num_compare, "raw")[, vars]
-        attr(num_compare, "combination") <- vars %>% t()
-        
-        p_scatter <- htmltools::plotTag({
-          plot(num_compare)
-        }, sprintf("A plot of the %s variable", vars %>% 
-                     paste(collapse = " vs ")), width = 600,
-        height = 400, device = grDevices::png)
-        
-        shiny::tabsetPanel(
-          shiny::tabPanel("Scatter Plot", p_scatter,
-                          hr(style = "border-top: 1px solid black;"),
-                          style = "padding-top:5px; padding-bottom:25px;"),
-          shiny::tabPanel("Linear Model Summaries", tab_model,
-                          hr(style = "border-top: 1px solid black;"),
-                          style = "padding-top:5px; padding-bottom:25px;")          
-        )        
-      }  
-    )
 }
-
 
 #' @importFrom shiny icon tabsetPanel tabPanel
 #' @importFrom dlookr compare_numeric find_class
@@ -850,6 +754,9 @@ html_compare_numerical <- function(.data) {
     htmltools::h5("The number of numerical variables is less than 2.")
   } else {
     num_compares <-  dlookr::compare_numeric(.data)
+    
+    cap <- "Relationship between two numerical variables"
+    html_cat(cap)
     
     num_compares$correlation %>% 
       reactable(
@@ -956,6 +863,9 @@ html_correlation <- function(.data) {
     mat_corr <- dlookr::correlate(.data) %>% 
       tidyr::spread(var2, coef_corr)
     
+    cap <- "Correlation coefficient matrix of numeric variables"
+    html_cat(cap)
+
     mat_corr %>% 
       reactable(
         defaultColDef = colDef(
@@ -986,11 +896,13 @@ html_correlation <- function(.data) {
 #' @export
 html_target_numerical <- function(.data, target) {
   if (is.null(target)) {
-    stop("The target variable is NULL .")    
+    htmltools::h5("The target variable is not defied.")   
+    return()
   }
   
   if (!target %in% names(.data)) {
-    stop("The data does not contain the variable specified for target.")    
+    htmltools::h5("The data does not contain the variable specified for target.")    
+    return()
   }  
   
   nm_numeric <- .data %>% 
@@ -1079,7 +991,7 @@ html_target_numerical <- function(.data, target) {
 #' @export
 html_target_categorical <- function(.data, target) {
   if (is.null(target)) {
-    stop("The target variable is NULL .")    
+    stop("The target variable is not defied.")    
   }
   
   if (!target %in% names(.data)) {
@@ -1182,7 +1094,7 @@ html_target_categorical <- function(.data, target) {
 #' @export
 html_target_correlation <- function(.data, target) {
   if (is.null(target)) {
-    stop("The target variable is NULL .")    
+    stop("The target variable is not defied.")    
   }
   
   if (!target %in% names(.data)) {
@@ -1845,7 +1757,7 @@ html_paged_correlation <- function(.data, full_width = TRUE, font_size = 13) {
 html_paged_target_numerical <- function(.data, target, full_width = TRUE, 
                                         font_size = 13) {
   if (is.null(target)) {
-    stop("The target variable is NULL .")    
+    stop("The target variable is not defied.")    
   }
   
   if (!target %in% names(.data)) {
@@ -1919,7 +1831,7 @@ html_paged_target_numerical <- function(.data, target, full_width = TRUE,
 html_paged_target_categorical <- function(.data, target, full_width = TRUE, 
                                         font_size = 13) {
   if (is.null(target)) {
-    stop("The target variable is NULL .")    
+    stop("The target variable is not defied.")    
   }
   
   if (!target %in% names(.data)) {
@@ -1990,7 +1902,7 @@ html_paged_target_categorical <- function(.data, target, full_width = TRUE,
 html_paged_target_correlation <- function(.data, target, full_width = TRUE, 
                                           font_size = 13) {
   if (is.null(target)) {
-    stop("The target variable is NULL .")    
+    stop("The target variable is not defied.")    
   }
   
   if (!target %in% names(.data)) {
