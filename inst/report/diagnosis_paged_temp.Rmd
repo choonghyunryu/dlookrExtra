@@ -363,7 +363,9 @@ knitr::kables(format = "html",
                  format.args = list(big.mark = ",")) %>% 
       kable_styling(full_width = FALSE, font_size = 15) 
     ),
-  caption = "Data Structures and Types") %>% 
+  caption = "Data structures and types") %>% 
+  gsub("font-size: initial !important;",
+       "font-size: 12px !important;", .) %>%
   cat()
 ```
 
@@ -382,7 +384,7 @@ value <- c("$dataset$",
 
 info_job <- data.frame(division = division, metrics = metrics, value = value)
 
-cap <- "Job Informations"
+cap <- "Job informations"
 
 print_tab(info_job, caption = cap)
 ```
@@ -400,11 +402,13 @@ if (NROW(tab_warning) < 1) {
     tidyr::spread(recommand, n) %>% 
     mutate_all(function(x) ifelse(is.na(x), 0, x))
 
-  knitr::kable(tab, format = "html", caption = "Summary of Warnings",
+  knitr::kable(tab, format = "html", caption = "Summary of warnings",
                col.names = c("checks", "judgements", "removes"),
                format.args = list(big.mark = ",")) %>% 
     kableExtra::kable_styling(full_width = TRUE, font_size = 14, 
                               position = "left") %>% 
+    gsub("font-size: initial !important;",
+         "font-size: 12px !important;", .) %>%
       cat()
 }
 ```
@@ -418,7 +422,7 @@ if (NROW(tab_warning) > 0) {
   
   print_tab(tab_warning, caption = cap, n_rows = 22, add_row = 6)
 } else {
-  cat("No warnings in dataset and variables")
+  html_cat("No warnings in dataset and variables")
   break_page_asis()
 }
 ```
@@ -426,7 +430,7 @@ if (NROW(tab_warning) > 0) {
 ## Variables
 
 ```{r variables, results='asis'}
-cap <- "List of Variables Diagnosis"
+cap <- "List of variables diagnosis"
 
 html_paged_variable(reportData, caption = cap, n_rows = 25)
 ```
@@ -436,6 +440,8 @@ $content_missing$
 ## List of Missing Values
 
 ```{r missing-list, results='asis'}
+cap <- "List of variables including missing values"
+
 html_paged_missing(diagn_na_unique, caption = cap, n_rows = 23, add_row = 5)
 ```
 
@@ -481,7 +487,7 @@ if (NROW(diagn_category) > 0) {
   
   print_tab(diagn_category, caption = cap, n_rows = 25, add_row = 4)
 } else {
-  cat("No categorical variable<br>")
+  html_cat("No categorical variable")
   break_page_asis()
 }
 ```
@@ -497,7 +503,7 @@ if (NROW(diagn_numeric) > 0) {
   
   print_tab(diagn_numeric, caption = cap, font_size = 13, n_rows = 25, add_row = 4)
 } else {
-  cat("No numerical variable")
+  html_cat("No numerical variable")
   break_page_asis()  
 }
 ```
@@ -518,11 +524,11 @@ if (NROW(diagn_numeric) > 0) {
   
     print_tab(diagn_zero, caption = cap, n_rows = 25, add_row = 4)
   } else {
-    cat("No numeric variable with zero value")
+    html_cat("No numeric variable with zero value")
     break_page_asis()      
   }
 } else {
-  cat("No numerical variable")
+  html_cat("No numerical variable")
   break_page_asis()    
 }
 ```
@@ -545,11 +551,11 @@ if (NROW(diagn_numeric) > 0) {
   
     print_tab(diagn_minus, caption = cap, n_rows = 25, add_row = 4)
   } else {
-    cat("No numeric variable with negative value")
+    html_cat("No numeric variable with negative value")
     break_page_asis()   
   }
 } else {
-  cat("No numerical variable")
+  html_cat("No numerical variable")
   break_page_asis()     
 }
 ```
@@ -571,11 +577,11 @@ if (NROW(diagn_numeric) > 0) {
   
     print_tab(diagn_outlier, caption = cap, n_rows = 25, add_row = 4)
   } else {
-    cat("No numeric variables including outliers")
+    html_cat("No numeric variables including outliers")
     break_page_asis() 
   }
 } else {
-  cat("No numerical variable")
+  html_cat("No numerical variable")
   break_page_asis() 
 }
 ```
@@ -622,6 +628,8 @@ if (NROW(diagn_numeric) > 0) {
       knitr::kable(outlier_df, digits = 2, caption = variables[i], format = "html",
                    table.attr = "class=\"table table-width\"", align = "lr") %>% 
         kable_styling(full_width = FALSE, font_size = 14, position = "center") %>% 
+        gsub("font-size: initial !important;",
+             "font-size: 12px !important;", .) %>%
         cat()
 
       cat("<br><br>")
@@ -631,10 +639,10 @@ if (NROW(diagn_numeric) > 0) {
       break_page_asis()
     }
   } else {
-    cat("No numeric variables including outliers")
+    html_cat("No numeric variables including outliers")
   }
 } else {
-  cat("No numerical variable")
+  html_cat("No numerical variable")
 }
 ```
 

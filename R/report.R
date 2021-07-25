@@ -1,53 +1,47 @@
 #' Reporting the information of data diagnosis with html
 #'
-#' @description The diagnose_report() report the information for diagnosing
+#' @description The diagnose_web_report() report the information for diagnosing
 #' the quality of the data.
 #'
 #' @details Generate generalized data diagnostic reports automatically.
-#' You can choose to output to pdf and html files.
 #' This is useful for diagnosing a data frame with a large number of variables
 #' than data with a small number of variables.
-#' 
-#' The title and subtitle colors should be designated by the color name used in 
-#' CSS of html, not the color defined in R. 
 #' 
 #' @section Reported information:
 #' Reported from the data diagnosis is as follows.
 #'
 #' \itemize{
-#'   \item Data Diagnosis
+#'   \item Overview
 #'   \itemize{
-#'     \item Overview 
+#'     \item Data Structures 
 #'     \itemize{
-#'       \item Missing/Unique Values
+#'       \item Data Structures
+#'       \item Data Types
+#'       \item Job Informations
 #'     }
-#'     \item Missing Values
-#'     \itemize{
-#'       \item List of Missing Values
-#'       \item Visualization
-#'     }
-#'     \item Unique Values
-#'     \itemize{
-#'       \item Categorical Variables
-#'       \item Numerical Variables
-#'     }
+#'     \item Warnings
+#'     \item Variables
 #'   }
-#'   \item Categorical Variable Diagnosis
+#'   \item Missing Values
 #'   \itemize{
 #'     \item Top Ranks
 #'   }   
 #'   \item Numerical Variable Diagnosis
 #'   \itemize{
-#'     \item Distribution
-#'     \itemize{
-#'       \item Zero Values
-#'       \item Minus Values
-#'     }
-#'     \item Outliers
-#'     \itemize{
-#'       \item List of Outliers
-#'       \item Individual Outliers
-#'     }
+#'     \item List of Missing Values
+#'     \item Visualization
+#'   }
+#'   \item Unique Values
+#'   \itemize{
+#'     \item Categorical Variables
+#'     \item Numerical Variables
+#'   }
+#'   \item Outliers
+#'   \item Samples
+#'   \itemize{
+#'     \item Duplicated
+#'     \item Heads
+#'     \item Tails
 #'   }
 #' }
 #'
@@ -58,7 +52,7 @@
 #' @param title character. title of report. default is "Data Diagnosis Report".
 #' @param subtitle character. subtitle of report. default is name of data.
 #' @param author character. author of report. default is "dlookr".
-#' @param title_color character. color of title. default is "white".
+#' @param title_color character. color of title. default is "gray".
 #' @param thres_uniq_cat numeric. threshold to use for "Unique Values - 
 #' Categorical Variables". default is 0.5.
 #' @param thres_uniq_num numeric. threshold to use for "Unique Values - 
@@ -75,23 +69,30 @@
 #'
 #' @examples
 #' \dontrun{
+#' # create dataset
+#' heartfailure2 <- dlookr::heartfailure
+#' heartfailure2[sample(seq(NROW(heartfailure2)), 20), "sodium"] <- NA
+#' heartfailure2[sample(seq(NROW(heartfailure2)), 5), "smoking"] <- NA
+#' heartfailure2[sample(seq(NROW(heartfailure2)), 2), "time"] <- 0
+#' heartfailure2[sample(seq(NROW(heartfailure2)), 1), "creatinine"] <- -0.3
+#'  
 #' # create pdf file. file name is Diagnosis_Paged_Report.pdf
-#' diagnose_report(heartfailure)
+#' # diagnose_web_report(heartfailure2)
 #' 
 #' # file name is Diagn.html. and change logo image
 #' # logo <- file.path(system.file(package = "dlookrExtra"), "report", "R_logo_html.svg")
-#' # diagnose_report(heartfailure, logo_img = logo, title_color = "black",
-#'     output_file = "Diagn.html")
+#' # diagnose_web_report(heartfailure2, logo_img = logo, title_color = "black",
+#' #   output_file = "Diagn.html")
 #'
 #' # file name is ./Diagn_heartfailure.html, "blue" theme and not browse
-#' # diagnose_report(heartfailure, output_dir = ".", author = "Choonghyun Ryu",
-#' #    output_file = "Diagn_heartfailure.html", theme = "blue", browse = FALSE)
+#' # diagnose_web_report(heartfailure2, output_dir = ".", author = "Choonghyun Ryu",
+#' #   output_file = "Diagn_heartfailure.html", theme = "blue", browse = FALSE)
 #' }
 #' 
 #' @importFrom rmarkdown render
 #' @importFrom knitr image_uri
 #' @export
-diagnose_report <- function(.data, output_file = NULL, output_dir = tempdir(),   
+diagnose_web_report <- function(.data, output_file = NULL, output_dir = tempdir(),   
                             browse = TRUE, title = "Data Diagnosis",
                             subtitle = deparse(substitute(.data)), author = "dlookr",
                             title_color = "gray", thres_uniq_cat = 0.5, 
@@ -103,11 +104,11 @@ diagnose_report <- function(.data, output_file = NULL, output_dir = tempdir(),
     stop("sample_percent must be a value between (0, 100].")
   }
   
-  assign("reportData", as.data.frame(.data), .dlookrExtraEnv)
-  assign("thres_uniq_cat", thres_uniq_cat, .dlookrExtraEnv)  
-  assign("thres_uniq_num", thres_uniq_num, .dlookrExtraEnv) 
-  assign("sample_percent", sample_percent, .dlookrExtraEnv)  
-  assign("author", author, .dlookrExtraEnv)  
+  assign("reportData", as.data.frame(.data), .dlookrEnv)
+  assign("thres_uniq_cat", thres_uniq_cat, .dlookrEnv)  
+  assign("thres_uniq_num", thres_uniq_num, .dlookrEnv) 
+  assign("sample_percent", sample_percent, .dlookrEnv)  
+  assign("author", author, .dlookrEnv)  
   
   path <- output_dir
   
@@ -218,8 +219,9 @@ diagnose_report <- function(.data, output_file = NULL, output_dir = tempdir(),
 #' This is useful for diagnosing a data frame with a large number of variables
 #' than data with a small number of variables.
 #' 
-#' The title and subtitle colors should be designated by the color name used in 
-#' CSS of html, not the color defined in R. 
+#' Create an  PDF through the Chrome DevTools Protocol. If you want to create PDF, 
+#' Google Chrome or Microsoft Edge (or Chromium on Linux) must be installed prior to using this function.
+#' If not installed, you must use output_format = "html".
 #' 
 #' @section Reported information:
 #' Reported from the data diagnosis is as follows.
@@ -228,6 +230,7 @@ diagnose_report <- function(.data, output_file = NULL, output_dir = tempdir(),
 #'   \item Overview
 #'   \itemize{
 #'     \item Data Structures 
+#'     \item Job Informations
 #'     \item Warnings
 #'     \item Variables
 #'   } 
@@ -296,31 +299,38 @@ diagnose_report <- function(.data, output_file = NULL, output_dir = tempdir(),
 #' It has a value between (0, 100]. 100 means all data, and 5 means 5% of sample data.
 #' This is useful for data with a large number of observations.
 #' @param ... arguments to be passed to methods.
-#'
+#' 
 #' @examples
 #' \dontrun{
+#' # create dataset
+#' heartfailure2 <- dlookr::heartfailure
+#' heartfailure2[sample(seq(NROW(heartfailure2)), 20), "sodium"] <- NA
+#' heartfailure2[sample(seq(NROW(heartfailure2)), 5), "smoking"] <- NA
+#' heartfailure2[sample(seq(NROW(heartfailure2)), 2), "time"] <- 0
+#' heartfailure2[sample(seq(NROW(heartfailure2)), 1), "creatinine"] <- -0.3
+#'  
 #' # create pdf file. file name is Diagnosis_Paged_Report.pdf
-#' diagnose_paged_report(heartfailure)
+#' # diagnose_paged_report(heartfailure2)
 #' 
 #' # create pdf file. file name is Diagn.pdf. and change cover image
 #' # cover <- file.path(system.file(package = "dlookrExtra"), "report", "cover2.jpg")
-#' # diagnose_paged_report(heartfailure, cover_img = cover, title_color = "gray",
-#'     output_file = "Diagn.pdf")
+#' # diagnose_paged_report(heartfailure2, cover_img = cover, title_color = "gray",
+#' #  output_file = "Diagn.pdf")
 #'
 #' # create pdf file. file name is ./Diagn.pdf and not browse
 #' # cover <- file.path(system.file(package = "dlookrExtra"), "report", "cover3.jpg")
-#' # diagnose_paged_report(heartfailure, output_dir = ".", cover_img = cover, 
-#' #    flag_content_missing = FALSE, output_file = "Diagn.pdf", browse = FALSE)
+#' # diagnose_paged_report(heartfailure2, output_dir = ".", cover_img = cover, 
+#' #   flag_content_missing = FALSE, output_file = "Diagn.pdf", browse = FALSE)
 #' 
 #' # create pdf file. file name is Diagnosis_Paged_Report.html
-#' # diagnose_paged_report(heartfailure, output_format = "html")
+#' # diagnose_paged_report(heartfailure2, output_format = "html")
 #' }
 #' 
 #' @importFrom rmarkdown render
-#' @importFrom pagedown chrome_print
+#' @importFrom pagedown chrome_print find_chrome
 #' @importFrom knitr image_uri
 #' @export
-diagnose_paged_report <- function(.data, output_format = c("pdf", "html"),
+diagnose_paged_report <- function(.data, output_format = c("pdf", "html")[1],
                            output_file = NULL, output_dir = tempdir(),   
                            browse = TRUE, title = "Data Diagnosis Report",
                            subtitle = deparse(substitute(.data)), author = "dlookr",
@@ -332,17 +342,21 @@ diagnose_paged_report <- function(.data, output_format = c("pdf", "html"),
                            create_date = Sys.time(),
                            logo_img = NULL, theme = c("orange", "blue")[1],
                            sample_percent = 100, ...) {
+  if (output_format %in% "pdf") {
+    browser <- pagedown::find_chrome()    
+  }
+  
   output_format <- match.arg(output_format)
   
   if (sample_percent > 100 | sample_percent <= 0) {
     stop("sample_percent must be a value between (0, 100].")
   }
   
-  assign("reportData", as.data.frame(.data), .dlookrExtraEnv)
-  assign("thres_uniq_cat", thres_uniq_cat, .dlookrExtraEnv)  
-  assign("thres_uniq_num", thres_uniq_num, .dlookrExtraEnv) 
-  assign("sample_percent", sample_percent, .dlookrExtraEnv)  
-  assign("author", author, .dlookrExtraEnv)  
+  assign("reportData", as.data.frame(.data), .dlookrEnv)
+  assign("thres_uniq_cat", thres_uniq_cat, .dlookrEnv)  
+  assign("thres_uniq_num", thres_uniq_num, .dlookrEnv) 
+  assign("sample_percent", sample_percent, .dlookrEnv)  
+  assign("author", author, .dlookrEnv)  
   
   path <- output_dir
   
@@ -473,7 +487,7 @@ diagnose_paged_report <- function(.data, output_format = c("pdf", "html"),
       cat(file = paste(path, rmd, sep = "/"))   
   }
   
-  if (output_format == "pdf") {
+  if (output_format %in% "pdf") {
     html_out <- rmarkdown::render(paste(path, rmd, sep = "/"))
     pagedown::chrome_print(html_out, output = output_file)
     
@@ -493,62 +507,57 @@ diagnose_paged_report <- function(.data, output_format = c("pdf", "html"),
 
 #' Reporting the information of EDA with html
 #'
-#' @description The eda_report() report the information for diagnosing
-#' the quality of the data.
+#' @description The eda_web_report() report the information of exploratory 
+#' data analysis for object inheriting from data.frame.
 #'
-#' @details Generate generalized data diagnostic reports automatically.
-#' You can choose to output to pdf and html files.
-#' This is useful for diagnosing a data frame with a large number of variables
-#' than data with a small number of variables.
-#' 
-#' The title and subtitle colors should be designated by the color name used in 
-#' CSS of html, not the color defined in R. 
+#' @details Generate generalized EDA report automatically.
+#' This feature is useful for EDA of data with many variables, rather than data with fewer variables.
 #' 
 #' @section Reported information:
-#' Reported from the data diagnosis is as follows.
+#' Reported from the EDA is as follows.
 #'
 #' \itemize{
-#'   \item Data Diagnosis
+#'   \item Overview
 #'   \itemize{
-#'     \item Overview 
-#'     \item Missing Values
+#'     \item Data Structures 
+#'     \item Data Types
+#'     \item Job Informations
+#'   }
+#'   \item Univariate Analysis
+#'   \itemize{
+#'     \item Descriptive Statistics
+#'     \item Normality Test
+#'   }   
+#'   \item Bivariate Analysis
+#'   \itemize{
+#'     \item Compare Numerical Variables
+#'     \item Compare Categorical Variables
+#'   }
+#'   \item Multivariate Analysis
+#'   \itemize{
+#'     \item Correlation Analysis
 #'     \itemize{
-#'       \item List of Missing Values
-#'       \item Visualization
-#'     }
-#'     \item Unique Values
-#'     \itemize{
-#'       \item Categorical Variables
-#'       \item Numerical Variables
+#'       \item Correlation Matrix
+#'       \item Correlation Plot
 #'     }
 #'   }
-#'   \item Categorical Variable Diagnosis
+#'   \item Target based Analysis
 #'   \itemize{
-#'     \item Top Ranks
-#'   }   
-#'   \item Numerical Variable Diagnosis
-#'   \itemize{
-#'     \item Distribution
-#'     \itemize{
-#'       \item Zero Values
-#'       \item Minus Values
-#'     }
-#'     \item Outliers
-#'     \itemize{
-#'       \item List of Outliers
-#'       \item Individual Outliers
-#'     }
+#'     \item Grouped Numerical Variables
+#'     \item Grouped Categorical Variables
+#'     \item Grouped Correlation
 #'   }
 #' }
 #'
 #' @param .data a data.frame or a \code{\link{tbl_df}}.
+#' @param target character. target variable.
 #' @param output_file name of generated file. default is NULL.
 #' @param output_dir name of directory to generate report file. default is tempdir().
 #' @param browse logical. choose whether to output the report results to the browser.
-#' @param title character. title of report. default is "Data Diagnosis Report".
+#' @param title character. title of report. default is "EDA Report".
 #' @param subtitle character. subtitle of report. default is name of data.
 #' @param author character. author of report. default is "dlookr".
-#' @param title_color character. color of title. default is "white".
+#' @param title_color character. color of title. default is "gray".
 #' @param create_date Date or POSIXct, character. The date on which the report is generated. 
 #' The default value is the result of Sys.time().
 #' @param logo_img character. name of logo image on top right.
@@ -561,25 +570,32 @@ diagnose_paged_report <- function(.data, output_format = c("pdf", "html"),
 #'
 #' @examples
 #' \dontrun{
-#' # create pdf file. file name is Diagnosis_Paged_Report.pdf
-#' eda_report(heartfailure)
+#' # create the dataset
+#' heartfailure2 <- dlookr::heartfailure
+#' heartfailure2[sample(seq(NROW(heartfailure2)), 20), "sodium"] <- NA
+#' heartfailure2[sample(seq(NROW(heartfailure2)), 5), "smoking"] <- NA
+#' 
+#' # create html file. file name is EDA_Report.html
+#' # eda_web_report(heartfailure2)
 #' 
 #' # file name is EDA.html. and change logo image
 #' # logo <- file.path(system.file(package = "dlookrExtra"), "report", "R_logo_html.svg")
-#' # eda_report(heartfailure, logo_img = logo, title_color = "black",
-#'     output_file = "EDA.html")
+#' # eda_web_report(heartfailure2, logo_img = logo, title_color = "black",
+#' #   output_file = "EDA.html")
 #'
 #' # file name is ./EDA_heartfailure.html, "blue" theme and not browse
-#' # eda_report(heartfailure, output_dir = ".", author = "Choonghyun Ryu",
-#' #    output_file = "EDA_heartfailure.html", theme = "blue", browse = FALSE)
+#' # eda_web_report(heartfailure2, target = "death_event", output_dir = ".", 
+#' #   author = "Choonghyun Ryu", output_file = "EDA_heartfailure.html", 
+#' #   theme = "blue", browse = FALSE)
 #' }
 #' 
 #' @importFrom rmarkdown render
 #' @importFrom knitr image_uri
+#' @importFrom tidyselect vars_select
 #' @export
-eda_report <- function(.data, target = NULL, output_file = NULL, 
+eda_web_report <- function(.data, target = NULL, output_file = NULL, 
                        output_dir = tempdir(), browse = TRUE, 
-                       title = "EDA", subtitle = deparse(substitute(.data)), 
+                       title = "EDA Report", subtitle = deparse(substitute(.data)), 
                        author = "dlookr", title_color = "gray", logo_img = NULL, 
                        create_date = Sys.time(), theme = c("orange", "blue")[1], 
                        sample_percent = 100, ...) {
@@ -595,10 +611,10 @@ eda_report <- function(.data, target = NULL, output_file = NULL,
     stop("sample_percent must be a value between (0, 100].")
   }
   
-  assign("reportData", as.data.frame(.data), .dlookrExtraEnv)
-  assign("targetVariable", vars, .dlookrExtraEnv)
-  assign("sample_percent", sample_percent, .dlookrExtraEnv)  
-  assign("author", author, .dlookrExtraEnv)  
+  assign("reportData", as.data.frame(.data), .dlookrEnv)
+  assign("targetVariable", vars, .dlookrEnv)
+  assign("sample_percent", sample_percent, .dlookrEnv)  
+  assign("author", author, .dlookrEnv)  
   
   path <- output_dir
   
@@ -705,19 +721,128 @@ eda_report <- function(.data, target = NULL, output_file = NULL,
 }
 
 
+
+#' Reporting the information of EDA
+#'
+#' @description The eda_paged_report() paged report the information for EDA.
+#'
+#' @details Generate generalized EDA report automatically. 
+#' You can choose to output to pdf and html files.
+#' This feature is useful for EDA of data with many variables, 
+#' rather than data with fewer variables.
+#' 
+#' Create an  PDF through the Chrome DevTools Protocol. If you want to create PDF, 
+#' Google Chrome or Microsoft Edge (or Chromium on Linux) must be installed prior to using this function.
+#' If not installed, you must use output_format = "html".
+#' 
+#' @section Reported information:
+#' The EDA process will report the following information:
+#'
+#' \itemize{
+#'   \item Overview
+#'   \itemize{
+#'     \item Data Structures 
+#'     \item Job Informations
+#'   } 
+#'   \item Univariate Analysis
+#'   \itemize{
+#'     \item Descriptive Statistics
+#'     \itemize{
+#'       \item Numerical Variables
+#'       \item Categorical Variables
+#'     }
+#'     \item Normality Test
+#'   } 
+#'   \item Bivariate Analysis
+#'   \itemize{
+#'     \item Compare Numerical Variables
+#'     \item Compare Categorical Variables
+#'   } 
+#'   \item Multivariate Analysis
+#'   \itemize{
+#'     \item Correlation Analysis
+#'     \itemize{
+#'       \item Correlation Coefficient Matrix
+#'       \item Correlation Plot
+#'     }
+#'   }
+#'   \item Target based Analysis
+#'   \itemize{
+#'     \item Grouped Numerical Variables
+#'     \item Grouped Categorical Variables
+#'     \item Grouped Correlation
+#'   }
+#' }
+#'
+#' @param .data a data.frame or a \code{\link{tbl_df}}.
+#' @param target character. target variable.
+#' @param output_format report output type. Choose either "pdf" and "html".
+#' "pdf" create pdf file by rmarkdown::render() and pagedown::chrome_print(). so, 
+#' you needed Chrome web browser on computer.  
+#' "html" create html file by rmarkdown::render().
+#' @param output_file name of generated file. default is NULL.
+#' @param output_dir name of directory to generate report file. default is tempdir().
+#' @param browse logical. choose whether to output the report results to the browser.
+#' @param title character. title of report. default is "Data Diagnosis Report".
+#' @param subtitle character. subtitle of report. default is name of data.
+#' @param author character. author of report. default is "dlookr".
+#' @param abstract_title character. abstract title of report. default is 
+#' "Report Overview".
+#' @param abstract character. abstract of report. 
+#' @param title_color character. color of title. default is "black".
+#' @param subtitle_color character. color of title. default is "blue".
+#' @param create_date Date or POSIXct, character. The date on which the report is generated. 
+#' The default value is the result of Sys.time().
+#' @param cover_img character. name of cover image. 
+#' @param logo_img character. name of logo image on top right.
+#' @param theme character. name of theme for report. support "orange" and "blue". 
+#' default is "orange".
+#' @param sample_percent numeric. Sample percent of data for performing Diagnosis. 
+#' It has a value between (0, 100]. 100 means all data, and 5 means 5% of sample data.
+#' This is useful for data with a large number of observations.
+#' @param ... arguments to be passed to methods.
+#' 
+#' @examples
+#' \dontrun{
+#' # create the dataset
+#' heartfailure2 <- dlookr::heartfailure
+#' heartfailure2[sample(seq(NROW(heartfailure2)), 20), "sodium"] <- NA
+#' heartfailure2[sample(seq(NROW(heartfailure2)), 5), "smoking"] <- NA
+#' 
+#' # create pdf file. file name is EDA_Paged_Report.pdf
+#' # eda_paged_report(heartfailure2, sample_percent = 80)
+#' 
+#' # create pdf file. file name is EDA.pdf. and change cover image
+#' # cover <- file.path(system.file(package = "dlookrExtra"), "report", "cover1.jpg")
+#' # eda_paged_report(heartfailure2, cover_img = cover, title_color = "gray",
+#' #   output_file = "EDA.pdf")
+#'
+#' # create pdf file. file name is ./EDA.pdf and not browse
+#' # cover <- file.path(system.file(package = "dlookrExtra"), "report", "cover3.jpg")
+#' # eda_paged_report(heartfailure2, output_dir = ".", cover_img = cover, 
+#' #   flag_content_missing = FALSE, output_file = "EDA.pdf", browse = FALSE)
+#' 
+#' # create pdf file. file name is EDA_Paged_Report.html
+#' # eda_paged_report(heartfailure2, target = "death_event", output_format = "html")
+#' }
+#' 
 #' @importFrom rmarkdown render
-#' @importFrom pagedown chrome_print
+#' @importFrom pagedown chrome_print find_chrome
 #' @importFrom knitr image_uri
 #' @export
-eda_paged_report <- function(.data, target = NULL, output_format = c("pdf", "html"),
+eda_paged_report <- function(.data, target = NULL, output_format = c("pdf", "html")[1],
                              output_file = NULL, output_dir = tempdir(),   
                              browse = TRUE, title = "EDA Report",
                              subtitle = deparse(substitute(.data)), author = "dlookr",
                              abstract_title = "Report Overview", abstract = NULL,
-                             title_color = "white", subtitle_color = "gold",
+                             title_color = "black", subtitle_color = "blue",
                              cover_img = NULL, create_date = Sys.time(),
                              logo_img = NULL, theme = c("orange", "blue")[1],
                              sample_percent = 100, ...) {
+  if (output_format %in% "pdf") {
+    browser <- pagedown::find_chrome()    
+  }
+  
   output_format <- match.arg(output_format)
   
   if (sample_percent > 100 | sample_percent <= 0) {
@@ -732,10 +857,10 @@ eda_paged_report <- function(.data, target = NULL, output_format = c("pdf", "htm
            },
            finally = NULL)
   
-  assign("reportData", as.data.frame(.data), .dlookrExtraEnv)
-  assign("targetVariable", vars, .dlookrExtraEnv)  
-  assign("sample_percent", sample_percent, .dlookrExtraEnv)  
-  assign("author", author, .dlookrExtraEnv)  
+  assign("reportData", as.data.frame(.data), .dlookrEnv)
+  assign("targetVariable", vars, .dlookrEnv)  
+  assign("sample_percent", sample_percent, .dlookrEnv)  
+  assign("author", author, .dlookrEnv)  
   
   path <- output_dir
   
@@ -826,7 +951,20 @@ eda_paged_report <- function(.data, target = NULL, output_format = c("pdf", "htm
                      readLines(paste(path, rmd, sep = "/")))
   cat(rmd_content, file = paste(path, rmd, sep = "/"), sep = "\n")     
   
-  if (output_format == "pdf") {
+  # targeted contents
+  if (!is.null(target)) {
+    rmd_content <- gsub("\\$targeted_eda\\$", "", 
+                        readLines(paste(path, rmd, sep = "/")))
+    cat(rmd_content, file = paste(path, rmd, sep = "/"), sep = "\n")     
+  } else {
+    txt <- readLines(paste(path, rmd, sep = "/")) %>% 
+      paste(collapse = "\n") 
+    
+    sub("\\$targeted_eda\\$[[:print:][:space:]]+\\$targeted_eda\\$", "", txt) %>% 
+      cat(file = paste(path, rmd, sep = "/"))   
+  }
+  
+  if (output_format %in% "pdf") {
     html_out <- rmarkdown::render(paste(path, rmd, sep = "/"))
     pagedown::chrome_print(html_out, output = output_file)
     
@@ -844,10 +982,74 @@ eda_paged_report <- function(.data, target = NULL, output_format = c("pdf", "htm
 
 
 
+#' Reporting the information of transformation with html
+#'
+#' @description The transformation_web_report() report the information of 
+#' transform numerical variables for object inheriting from data.frame.
+#'
+#' @details Generate transformation reports automatically. 
+#' This is useful for Binning a data frame with a large number of variables 
+#' than data with a small number of variables.
+#' 
+#' @section Reported information:
+#' The transformation process will report the following information:
+#'
+#' \itemize{
+#'   \item Overview
+#'   \itemize{
+#'     \item Data Structures 
+#'     \item Data Types
+#'     \item Job Informations
+#'   }
+#'   \item Imputation
+#'   \itemize{
+#'     \item Missing Values
+#'     \item Outliers
+#'   }   
+#'   \item Resolving Skewness
+#'   \item Binning
+#'   \item Optimal Binning
+#' }
+#'
+#' @param .data a data.frame or a \code{\link{tbl_df}}.
+#' @param target character. target variable.
+#' @param output_file name of generated file. default is NULL.
+#' @param output_dir name of directory to generate report file. default is tempdir().
+#' @param browse logical. choose whether to output the report results to the browser.
+#' @param title character. title of report. default is "EDA Report".
+#' @param subtitle character. subtitle of report. default is name of data.
+#' @param author character. author of report. default is "dlookr".
+#' @param title_color character. color of title. default is "gray".
+#' @param create_date Date or POSIXct, character. The date on which the report is generated. 
+#' The default value is the result of Sys.time().
+#' @param logo_img character. name of logo image on top right.
+#' @param theme character. name of theme for report. support "orange" and "blue". 
+#' default is "orange".
+#' @param sample_percent numeric. Sample percent of data for performing EDA. 
+#' It has a value between (0, 100]. 100 means all data, and 5 means 5% of sample data.
+#' This is useful for data with a large number of observations.
+#' @param ... arguments to be passed to methods.
+#'
+#' @examples
+#' \dontrun{
+#' # create html file. file name is Transformation_Report.html
+#' # transformation_web_report(heartfailure)
+#' 
+#' # file name is Transformation.html. and change logo image
+#' # logo <- file.path(system.file(package = "dlookrExtra"), "report", "R_logo_html.svg")
+#' # transformation_web_report(heartfailure, logo_img = logo, title_color = "black",
+#' #   output_file = "Transformation.html")
+#'
+#' # file name is ./Transformation.html, "blue" theme and not browse
+#' # transformation_web_report(heartfailure, output_dir = ".", target = "death_event", 
+#' #   author = "Choonghyun Ryu", output_file = "Transformation.html", 
+#' #   theme = "blue", browse = FALSE)
+#' }
+#' 
 #' @importFrom rmarkdown render
 #' @importFrom knitr image_uri
 #' @export
-transformation_report <- function(.data, target = NULL, output_file = NULL, 
+transformation_web_report <- function(.data, target = NULL, output_file = NULL, 
                        output_dir = tempdir(), browse = TRUE, 
                        title = "Transformation", subtitle = deparse(substitute(.data)), 
                        author = "dlookr", title_color = "gray", logo_img = NULL, 
@@ -864,10 +1066,10 @@ transformation_report <- function(.data, target = NULL, output_file = NULL,
   if (sample_percent > 100 | sample_percent <= 0) {
     stop("sample_percent must be a value between (0, 100].")
   }
-  assign("reportData", as.data.frame(.data), .dlookrExtraEnv)
-  assign("targetVariable", vars, .dlookrExtraEnv)
-  assign("sample_percent", sample_percent, .dlookrExtraEnv)  
-  assign("author", author, .dlookrExtraEnv)  
+  assign("reportData", as.data.frame(.data), .dlookrEnv)
+  assign("targetVariable", vars, .dlookrEnv)
+  assign("sample_percent", sample_percent, .dlookrEnv)  
+  assign("author", author, .dlookrEnv)  
   
   path <- output_dir
   
@@ -974,21 +1176,103 @@ transformation_report <- function(.data, target = NULL, output_file = NULL,
 }
 
 
-
+#' Reporting the information of transformation
+#'
+#' @description The eda_paged_report() paged report the information for data transformatiom.
+#'
+#' @details Generate transformation reports automatically. 
+#' You can choose to output to pdf and html files.
+#' This is useful for Binning a data frame with a large number of variables 
+#' than data with a small number of variables.
+#' 
+#' Create an  PDF through the Chrome DevTools Protocol. If you want to create PDF, 
+#' Google Chrome or Microsoft Edge (or Chromium on Linux) must be installed prior to using this function.
+#' If not installed, you must use output_format = "html".
+#' 
+#' @section Reported information:
+#' TThe transformation process will report the following information:
+#'
+#' \itemize{
+#'   \item Overview
+#'   \itemize{
+#'     \item Data Structures 
+#'     \item Job Informations
+#'   } 
+#'   \item Imputation
+#'   \itemize{
+#'     \item Missing Values
+#'     \item Outliers
+#'   } 
+#'   \item Resolving Skewness
+#'   \item Binning
+#'   \item Optimal Binning
+#' }
+#'
+#' @param .data a data.frame or a \code{\link{tbl_df}}.
+#' @param target character. target variable.
+#' @param output_format report output type. Choose either "pdf" and "html".
+#' "pdf" create pdf file by rmarkdown::render() and pagedown::chrome_print(). so, 
+#' you needed Chrome web browser on computer.  
+#' "html" create html file by rmarkdown::render().
+#' @param output_file name of generated file. default is NULL.
+#' @param output_dir name of directory to generate report file. default is tempdir().
+#' @param browse logical. choose whether to output the report results to the browser.
+#' @param title character. title of report. default is "Data Diagnosis Report".
+#' @param subtitle character. subtitle of report. default is name of data.
+#' @param author character. author of report. default is "dlookr".
+#' @param abstract_title character. abstract title of report. default is 
+#' "Report Overview".
+#' @param abstract character. abstract of report. 
+#' @param title_color character. color of title. default is "white".
+#' @param subtitle_color character. color of title. default is "tomato1".
+#' @param create_date Date or POSIXct, character. The date on which the report is generated. 
+#' The default value is the result of Sys.time().
+#' @param cover_img character. name of cover image. 
+#' @param logo_img character. name of logo image on top right.
+#' @param theme character. name of theme for report. support "orange" and "blue". 
+#' default is "orange".
+#' @param sample_percent numeric. Sample percent of data for performing Diagnosis. 
+#' It has a value between (0, 100]. 100 means all data, and 5 means 5% of sample data.
+#' This is useful for data with a large number of observations.
+#' @param ... arguments to be passed to methods.
+#' 
+#' @examples
+#' \dontrun{
+#' # create pdf file. file name is Transformation_Paged_Report.pdf
+#' # transformation_paged_report(heartfailure, sample_percent = 80)
+#' 
+#' # create pdf file. file name is Transformation_heartfailure. and change cover image
+#' # cover <- file.path(system.file(package = "dlookrExtra"), "report", "cover2.jpg")
+#' # transformation_paged_report(heartfailure, cover_img = cover, title_color = "gray",
+#' #   output_file = "Transformation_heartfailure")
+#'
+#' # create pdf file. file name is ./Transformation.pdf and not browse
+#' # cover <- file.path(system.file(package = "dlookrExtra"), "report", "cover1.jpg")
+#' # transformation_paged_report(heartfailure, output_dir = ".", cover_img = cover, 
+#' #   flag_content_missing = FALSE, output_file = "Transformation.pdf", browse = FALSE)
+#' 
+#' # create pdf file. file name is Transformation_Paged_Report.html
+#' # transformation_paged_report(heartfailure, target = "death_event", output_format = "html")
+#' }
+#' 
 #' @importFrom rmarkdown render
-#' @importFrom pagedown chrome_print
+#' @importFrom pagedown chrome_print find_chrome
 #' @importFrom knitr image_uri
 #' @export
 transformation_paged_report <- function(.data, target = NULL, 
-                             output_format = c("pdf", "html"),
+                             output_format = c("pdf", "html")[1],
                              output_file = NULL, output_dir = tempdir(),   
                              browse = TRUE, title = "Transformation Report",
                              subtitle = deparse(substitute(.data)), author = "dlookr",
                              abstract_title = "Report Overview", abstract = NULL,
-                             title_color = "white", subtitle_color = "gold",
+                             title_color = "white", subtitle_color = "tomato1",
                              cover_img = NULL, create_date = Sys.time(),
                              logo_img = NULL, theme = c("orange", "blue")[1],
                              sample_percent = 100, ...) {
+  if (output_format %in% "pdf") {
+    browser <- pagedown::find_chrome()    
+  }
+  
   output_format <- match.arg(output_format)
   
   if (sample_percent > 100 | sample_percent <= 0) {
@@ -1003,10 +1287,10 @@ transformation_paged_report <- function(.data, target = NULL,
            },
            finally = NULL)
   
-  assign("reportData", as.data.frame(.data), .dlookrExtraEnv)
-  assign("targetVariable", vars, .dlookrExtraEnv)  
-  assign("sample_percent", sample_percent, .dlookrExtraEnv)  
-  assign("author", author, .dlookrExtraEnv)  
+  assign("reportData", as.data.frame(.data), .dlookrEnv)
+  assign("targetVariable", vars, .dlookrEnv)  
+  assign("sample_percent", sample_percent, .dlookrEnv)  
+  assign("author", author, .dlookrEnv)  
   
   path <- output_dir
   
@@ -1097,7 +1381,20 @@ transformation_paged_report <- function(.data, target = NULL,
                      readLines(paste(path, rmd, sep = "/")))
   cat(rmd_content, file = paste(path, rmd, sep = "/"), sep = "\n")     
   
-  if (output_format == "pdf") {
+  # targeted contents
+  if (!is.null(target)) {
+    rmd_content <- gsub("\\$targeted_eda\\$", "", 
+                        readLines(paste(path, rmd, sep = "/")))
+    cat(rmd_content, file = paste(path, rmd, sep = "/"), sep = "\n")     
+  } else {
+    txt <- readLines(paste(path, rmd, sep = "/")) %>% 
+      paste(collapse = "\n") 
+    
+    sub("\\$targeted_eda\\$[[:print:][:space:]]+\\$targeted_eda\\$", "", txt) %>% 
+      cat(file = paste(path, rmd, sep = "/"))   
+  }  
+  
+  if (output_format %in% "pdf") {
     html_out <- rmarkdown::render(paste(path, rmd, sep = "/"))
     pagedown::chrome_print(html_out, output = output_file, timeout = 90)
     

@@ -52,7 +52,7 @@
     vertical-align: top;
   }  
   @bottom-right {
-    content: "dlookrExtra / " string(date-text);
+    content: "dlookr / " string(date-text);
     margin-right: -10mm;
     margin-top: 10mm;
     padding-top: 1.5mm;
@@ -91,7 +91,7 @@
     vertical-align: top;
   }
   @bottom-left {
-    content: "dlookrExtra / " string(date-text);
+    content: "dlookr / " string(date-text);
     margin-left: -10mm;
     margin-top: 10mm;
     padding-top: 1.5mm;

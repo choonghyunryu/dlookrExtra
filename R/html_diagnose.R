@@ -535,7 +535,7 @@ html_missing <- function(tab, grade = c("Good" = 0.05, "OK" = 0.1,
     )
     
   } else {
-    h5("No variables including missing values")
+    html_cat("No variables including missing values")
     break_line_asis(1)
   }
 }
@@ -574,7 +574,7 @@ html_paged_missing <- function(tab, grade = c("Good" = 0.05, "OK" = 0.1,
               full_width = full_width, font_size = font_size, align = "lrrll")
 
   } else {
-    h5("No variables including missing values")
+    html_cat("No variables including missing values")
     break_line_asis(1)
   }
 }

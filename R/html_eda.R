@@ -615,7 +615,7 @@ html_compare_category <- function(.data, n_cells = 20, n_levels = 10) {
     find_class("categorical")
   
   if (length(idx) < 2) {
-    h5("The number of categorical variables is less than 2.")
+    html_cat("The number of categorical variables is less than 2.")
   } else {
     is_under_n <- idx %>%
       purrr::map_int(
@@ -628,7 +628,7 @@ html_compare_category <- function(.data, n_cells = 20, n_levels = 10) {
       idx[.]
     
     if (length(idx_target) < 2) {
-      h5("The valid categorical variables is less than 2.")
+      html_cat("The valid categorical variables is less than 2.")
     } else {
       cat_compares <-  compare_category(.data[, idx_target]) 
       tabs <- summary(cat_compares, "all", marginal = TRUE, na.rm = FALSE, 
@@ -741,7 +741,6 @@ html_compare_category <- function(.data, n_cells = 20, n_levels = 10) {
 #' @importFrom shiny icon tabsetPanel tabPanel
 #' @importFrom dlookr compare_numeric find_class
 #' @importFrom purrr map_int
-#' @importFrom htmltools h5
 #' @importFrom hrbrthemes theme_ipsum
 #' @import reactable
 #' @import dplyr
@@ -751,7 +750,7 @@ html_compare_numerical <- function(.data) {
     dlookr::find_class("numerical")
   
   if (length(idx) < 2) {
-    htmltools::h5("The number of numerical variables is less than 2.")
+    html_cat("The number of numerical variables is less than 2.")
   } else {
     num_compares <-  dlookr::compare_numeric(.data)
     
@@ -848,7 +847,6 @@ html_compare_numerical <- function(.data) {
 
 
 #' @importFrom dlookr correlate find_class
-#' @importFrom htmltools h5
 #' @importFrom tidyr spread
 #' @import reactable
 #' @import dplyr
@@ -858,7 +856,7 @@ html_correlation <- function(.data) {
     dlookr::find_class("numerical")
   
   if (length(idx) < 2) {
-    htmltools::h5("The number of numerical variables is less than 2.")
+    html_cat("The number of numerical variables is less than 2.")
   } else {
     mat_corr <- dlookr::correlate(.data) %>% 
       tidyr::spread(var2, coef_corr)
@@ -890,18 +888,17 @@ html_correlation <- function(.data) {
 
 #' @importFrom shiny icon tabsetPanel tabPanel
 #' @importFrom dlookr target_by relate plot_outlier find_class
-#' @importFrom htmltools h5
 #' @import reactable
 #' @import dplyr
 #' @export
 html_target_numerical <- function(.data, target) {
   if (is.null(target)) {
-    htmltools::h5("The target variable is not defied.")   
+    html_cat("The target variable is not defied.")   
     return()
   }
   
   if (!target %in% names(.data)) {
-    htmltools::h5("The data does not contain the variable specified for target.")    
+    html_cat("The data does not contain the variable specified for target.")    
     return()
   }  
   
@@ -910,7 +907,7 @@ html_target_numerical <- function(.data, target) {
     setdiff(target)
   
   if (length(nm_numeric) < 1) {
-    htmltools::h5("There are no numeric variables except for the target variable.")
+    html_cat("There are no numeric variables except for the target variable.")
   } else {
     suppressWarnings({
       tab_main <- data.frame(Variable = nm_numeric, target_variable = target)
@@ -985,7 +982,6 @@ html_target_numerical <- function(.data, target) {
 
 #' @importFrom shiny icon tabsetPanel tabPanel
 #' @importFrom dlookr target_by relate find_class
-#' @importFrom htmltools h5
 #' @import reactable
 #' @import dplyr
 #' @export
@@ -1003,7 +999,7 @@ html_target_categorical <- function(.data, target) {
     setdiff(target)
   
   if (length(nm_categorical) < 1) {
-    htmltools::h5("There are no nm_categorical variables except for the target variable.")
+    html_cat("There are no nm_categorical variables except for the target variable.")
   } else {
     suppressWarnings({
       tab_main <- data.frame(Variable = nm_categorical, target_variable = target)
@@ -1087,7 +1083,7 @@ html_target_categorical <- function(.data, target) {
 
 #' @importFrom shiny icon tabsetPanel tabPanel
 #' @importFrom dlookr plot_correlate correlate find_class
-#' @importFrom htmltools h5 plotTag
+#' @importFrom htmltools plotTag
 #' @importFrom tidyr spread
 #' @import reactable
 #' @import dplyr
@@ -1106,7 +1102,7 @@ html_target_correlation <- function(.data, target) {
     setdiff(target)
   
   if (length(nm_numeric) < 2) {
-    htmltools::h5("The number of numerical variables is less than 2.")
+    html_cat("The number of numerical variables is less than 2.")
   } else {
     tab_main <- .data %>% 
       group_by_at(all_of(target)) %>% 
@@ -1477,59 +1473,58 @@ html_paged_normality_detail <- function(.data) {
 #' @importFrom htmltools div h3
 #' @export
 html_paged_compare_numerical <- function(.data, n_rows = 25, add_row = 3, 
-                                         caption = "Correlation Coefficient", 
+                                         caption = "Correlation coefficient", 
                                          full_width = TRUE, digits = 5, 
                                          font_size = 13) {
   idx <- .data %>% 
     find_class("numerical")
   
   if (length(idx) < 2) {
-    return("The number of numerical variables is less than 2.")
-  }
-  
-  num_compares <-  compare_numeric(.data)
-  
-  tabs <- num_compares$correlation %>% 
-    rename("first variable" = var1,
-           "second variable" = var2,
-           "correlation coefficient" = coef_corr) 
-  
-  caption <- "correlation coefficient"
-
-  print_tab(tabs, n_rows = n_rows, add_row = add_row, caption = caption, 
-            full_width = full_width, font_size = font_size, 
-            digits = digits, big_mark = FALSE)
-  
-  df_linear <- num_compares$linear
-  
-  for (i in seq(NROW(df_linear))) {
-    el <- div(h3(paste0("'", df_linear[i, "var1"], "' vs '", 
-                        df_linear[i, "var2"], "'")))
-    cat(as.character(el))
-    
-    df_linear[i, ] %>% 
-      select(-logLik, -AIC, -BIC, -deviance, -df.residual, -nobs) %>% 
-      rename("first variable" = var1,
-             "second variable" = var2) %>% 
-      knitr::kable(format = "html", caption = "correlation coefficient") %>% 
-      kableExtra::kable_styling(full_width = TRUE, font_size = font_size, 
-                                position = "left") %>%
-      gsub("font-size: initial !important;", 
-           "font-size: 12px !important;", .) %>% 
-      cat() 
-    
-    break_line_asis(1)
-    
-    num_compare <- num_compares
-    
-    vars <- attr(num_compare, "combination")[i, ]
-    attr(num_compare, "raw") <- attr(num_compare, "raw")[, vars]
-    attr(num_compare, "combination") <- vars %>% t()
-
-    plot(num_compare)
-    
+    html_cat("The number of numerical variables is less than 2.")
     break_page_asis()
-  }  
+  } else {
+    num_compares <-  compare_numeric(.data)
+    
+    tabs <- num_compares$correlation %>% 
+      rename("first variable" = var1,
+             "second variable" = var2,
+             "correlation coefficient" = coef_corr) 
+    
+    print_tab(tabs, n_rows = n_rows, add_row = add_row, caption = caption, 
+              full_width = full_width, font_size = font_size, 
+              digits = digits, big_mark = FALSE)
+    
+    df_linear <- num_compares$linear
+    
+    for (i in seq(NROW(df_linear))) {
+      el <- div(h3(paste0("'", df_linear[i, "var1"], "' vs '", 
+                          df_linear[i, "var2"], "'")))
+      cat(as.character(el))
+      
+      df_linear[i, ] %>% 
+        select(-logLik, -AIC, -BIC, -deviance, -df.residual, -nobs) %>% 
+        rename("first variable" = var1,
+               "second variable" = var2) %>% 
+        knitr::kable(format = "html", caption = "Summary of linear model") %>% 
+        kableExtra::kable_styling(full_width = TRUE, font_size = font_size, 
+                                  position = "left") %>%
+        gsub("font-size: initial !important;", 
+             "font-size: 12px !important;", .) %>% 
+        cat() 
+      
+      break_line_asis(1)
+      
+      num_compare <- num_compares
+      
+      vars <- attr(num_compare, "combination")[i, ]
+      attr(num_compare, "raw") <- attr(num_compare, "raw")[, vars]
+      attr(num_compare, "combination") <- vars %>% t()
+      
+      plot(num_compare)
+      
+      break_page_asis()
+    }      
+  }
 }
 
 
@@ -1609,113 +1604,114 @@ html_paged_compare_categorical <- function(.data, n_rows = 25, add_row = 3,
     find_class("categorical")
   
   if (length(idx) < 2) {
-    return("The number of categorical variables is less than 2.")
-  }
-  
-  n_levels <- idx %>%
-    sapply(function(x) {
-      levels(.data[, x]) %>% 
-        length()
-    })
-  
-  idx_target <- which(n_levels <= thres_levels) %>% 
-    idx[.]
-  
-  if (length(idx_target) < 2) {
-    return("The valid categorical variables is less than 2.")
-  }
-  
-  cat_compares <-  compare_category(.data[, idx_target]) 
-  tabs <- summary(cat_compares, "all", marginal = TRUE, na.rm = FALSE, 
-                  verbose = FALSE)
-  tab_compare <- tabs$chisq %>% 
-    filter(df <= thres_cells) %>% 
-    filter(!is.nan(statistic))
-  
-  tab_compare <- tab_compare %>% 
-    select(1, 2, 5, 3, 4) %>% 
-    rename("first variable" = variable_1,
-           "second variable" = variable_2,
-           "degree of freedom" = df,
-           "p-value" = p.value) 
-  
-  print_tab(tab_compare, n_rows = n_rows, add_row = add_row, caption = caption, 
-            full_width = full_width, font_size = font_size, 
-            digits = digits, big_mark = FALSE)
-  
-  for (i in seq(NROW(tab_compare))) {
-    el <- div(h3(paste0("'", tab_compare[i, 1], "' vs '", tab_compare[i, 2], "'")))
-    cat(as.character(el))
-    
-    ctable <- tabs$table[[i]]
-    
-    contingency <- function(tab, relate = FALSE) {
-      dname <-  tab %>% dimnames()
-      dframe <- tab %>% data.frame()
-      
-      if (relate) {
-        dframe <- round(dframe / dframe[nrow(dframe), ncol(dframe)] * 100, 2)
-      }
-      
-      rownames(dframe) <- tab %>% 
-        rownames() %>% 
-        ifelse(is.na(.), "<NA>", .)
-      
-      rname <- dname %>% names() %>% "["(1)
-      varname <- ifelse(is.na(dname[[2]]), "<NA>", dname[[2]])
-      
-      colum_list <- seq(ncol(dframe)) %>% 
-        lapply(function(x) {
-          colDef(
-            name = varname[x],
-            format = colFormat(
-              separators = TRUE
-            ),
-            sortable = FALSE
-          )
-        }) 
-      names(colum_list) <- names(dframe)
-    
-      cname <- list(
-        colGroup(name = dname %>% names() %>% "["(2), 
-                 columns = names(dframe))
-      )
-      
-      dframe
-    }
-    
-    x <- ctable %>% dimnames() %>% names() %>% "["(1)
-    y <- ctable %>% dimnames() %>% names() %>% "["(2)
-    idx_nm <- paste(x, y, sep = " vs ")
-    
-    header_above <- c(1, NCOL(ctable))
-    names(header_above) <- c(tab_compare[i, 1], tab_compare[i, 2])
-    
-    ctable %>% 
-      knitr::kable(format = "html") %>% 
-      kableExtra::add_header_above(header_above) %>% 
-      kableExtra::kable_styling(full_width = TRUE, font_size = font_size, 
-                                position = "left") %>%
-      cat() 
-    break_line_asis(1)  
-    
-    total <- ctable[NROW(ctable),  NCOL(ctable)]
-    
-    round(ctable / total * 100, 2) %>% 
-      knitr::kable(format = "html") %>% 
-      kableExtra::add_header_above(header_above) %>% 
-      kableExtra::kable_styling(full_width = TRUE, font_size = font_size, 
-                                position = "left") %>%
-      cat() 
-    break_line_asis(1)  
-    
-    plot_compare(x, y, cat_compares[[i]])
+    html_cat("The number of categorical variables is less than 2.")
     break_page_asis()
+  } else {
+    n_levels <- idx %>%
+      sapply(function(x) {
+        levels(.data[, x]) %>% 
+          length()
+      })
+    
+    idx_target <- which(n_levels <= thres_levels) %>% 
+      idx[.]
+    
+    if (length(idx_target) < 2) {
+      html_cat("The valid categorical variables is less than 2.")
+      break_page_asis()
+    } else {
+      cat_compares <-  compare_category(.data[, idx_target]) 
+      tabs <- summary(cat_compares, "all", marginal = TRUE, na.rm = FALSE, 
+                      verbose = FALSE)
+      tab_compare <- tabs$chisq %>% 
+        filter(df <= thres_cells) %>% 
+        filter(!is.nan(statistic))
+      
+      tab_compare <- tab_compare %>% 
+        select(1, 2, 5, 3, 4) %>% 
+        rename("first variable" = variable_1,
+               "second variable" = variable_2,
+               "degree of freedom" = df,
+               "p-value" = p.value) 
+      
+      print_tab(tab_compare, n_rows = n_rows, add_row = add_row, caption = caption, 
+                full_width = full_width, font_size = font_size, 
+                digits = digits, big_mark = FALSE)
+      
+      for (i in seq(NROW(tab_compare))) {
+        el <- div(h3(paste0("'", tab_compare[i, 1], "' vs '", tab_compare[i, 2], "'")))
+        cat(as.character(el))
+        
+        ctable <- tabs$table[[i]]
+        
+        contingency <- function(tab, relate = FALSE) {
+          dname <-  tab %>% dimnames()
+          dframe <- tab %>% data.frame()
+          
+          if (relate) {
+            dframe <- round(dframe / dframe[nrow(dframe), ncol(dframe)] * 100, 2)
+          }
+          
+          rownames(dframe) <- tab %>% 
+            rownames() %>% 
+            ifelse(is.na(.), "<NA>", .)
+          
+          rname <- dname %>% names() %>% "["(1)
+          varname <- ifelse(is.na(dname[[2]]), "<NA>", dname[[2]])
+          
+          colum_list <- seq(ncol(dframe)) %>% 
+            lapply(function(x) {
+              colDef(
+                name = varname[x],
+                format = colFormat(
+                  separators = TRUE
+                ),
+                sortable = FALSE
+              )
+            }) 
+          names(colum_list) <- names(dframe)
+          
+          cname <- list(
+            colGroup(name = dname %>% names() %>% "["(2), 
+                     columns = names(dframe))
+          )
+          
+          dframe
+        }
+        
+        x <- ctable %>% dimnames() %>% names() %>% "["(1)
+        y <- ctable %>% dimnames() %>% names() %>% "["(2)
+        idx_nm <- paste(x, y, sep = " vs ")
+        
+        header_above <- c(1, NCOL(ctable))
+        names(header_above) <- c(tab_compare[i, 1], tab_compare[i, 2])
+        
+        ctable %>% 
+          knitr::kable(format = "html") %>% 
+          kableExtra::add_header_above(header_above) %>% 
+          kableExtra::kable_styling(full_width = TRUE, font_size = font_size, 
+                                    position = "left") %>%
+          cat() 
+        break_line_asis(1)  
+        
+        total <- ctable[NROW(ctable),  NCOL(ctable)]
+        
+        round(ctable / total * 100, 2) %>% 
+          knitr::kable(format = "html") %>% 
+          kableExtra::add_header_above(header_above) %>% 
+          kableExtra::kable_styling(full_width = TRUE, font_size = font_size, 
+                                    position = "left") %>%
+          cat() 
+        break_line_asis(1)  
+        
+        plot_compare(x, y, cat_compares[[i]])
+        break_page_asis()
+      } 
+    }
   }
 }
 
 #' @importFrom dlookr correlate find_class
-#' @importFrom htmltools h5
 #' @importFrom tidyr spread
 #' @import dplyr
 #' @importFrom knitr kable
@@ -1726,7 +1722,8 @@ html_paged_correlation <- function(.data, full_width = TRUE, font_size = 13) {
     dlookr::find_class("numerical")
   
   if (length(idx) < 2) {
-    htmltools::h5("The number of numerical variables is less than 2.")
+    html_cat("The number of numerical variables is less than 2.")
+    break_page_asis()
   } else {
     mat_corr <- dlookr::correlate(.data) %>% 
       tidyr::spread(var2, coef_corr) 
@@ -1736,11 +1733,15 @@ html_paged_correlation <- function(.data, full_width = TRUE, font_size = 13) {
     
     names(mat_corr)[1] <- "first variable"
     
+    caption <- "Matrix table of correlation coefficient"
+    
     mat_corr %>% 
-      knitr::kable(format = "html", digits = 3) %>% 
+      knitr::kable(format = "html", digits = 3, caption = caption) %>% 
       kableExtra::add_header_above(header_above) %>% 
       kableExtra::kable_styling(full_width = full_width, font_size = font_size, 
                                 position = "left") %>%
+      gsub("font-size: initial !important;",
+           "font-size: 12px !important;", .) %>%        
       cat() 
     
     break_page_asis()
@@ -1749,7 +1750,6 @@ html_paged_correlation <- function(.data, full_width = TRUE, font_size = 13) {
 
 
 #' @importFrom dlookr target_by relate plot_outlier find_class
-#' @importFrom htmltools h5
 #' @import dplyr
 #' @importFrom knitr kable
 #' @importFrom kableExtra kable_styling add_header_above
@@ -1757,73 +1757,75 @@ html_paged_correlation <- function(.data, full_width = TRUE, font_size = 13) {
 html_paged_target_numerical <- function(.data, target, full_width = TRUE, 
                                         font_size = 13) {
   if (is.null(target)) {
-    stop("The target variable is not defied.")    
-  }
-  
-  if (!target %in% names(.data)) {
-    stop("The data does not contain the variable specified for target.")    
-  }  
-  
-  nm_numeric <- .data %>% 
-    dlookr::find_class("numerical", index = FALSE) %>% 
-    setdiff(target)
-  
-  if (length(nm_numeric) < 1) {
-    htmltools::h5("There are no numeric variables except for the target variable.")
+    html_cat("The target variable is not defied.")    
+  } else if (!target %in% names(.data)) {
+    html_cat("The data does not contain the variable specified for target.")    
   } else {
-    suppressWarnings({
-      tab_main <- data.frame(Variable = nm_numeric, target_variable = target)
-    })
+    nm_numeric <- .data %>% 
+      dlookr::find_class("numerical", index = FALSE) %>% 
+      setdiff(target)
     
-    tgt_by <- .data %>% 
-      dlookr::target_by(target)
-    
-    for (i in seq(NROW(tab_main))) {
-      nm_var <- nm_numeric[i]
+    if (length(nm_numeric) < 1) {
+      html_cat("There are no numeric variables except for the target variable.")
+    } else {
+      suppressWarnings({
+        tab_main <- data.frame(Variable = nm_numeric, target_variable = target)
+      })
       
-      el <- div(h3(nm_var))
-      cat(as.character(el))
+      tgt_by <- .data %>% 
+        dlookr::target_by(target)
       
-      dlookr::plot_outlier(tgt_by, all_of(nm_var))
-      
-      if (i == 1) {
-        break_line_asis(20)
-      } else {
-        break_line_asis(1)
+      for (i in seq(NROW(tab_main))) {
+        nm_var <- nm_numeric[i]
+        
+        el <- div(h3(nm_var))
+        cat(as.character(el))
+        
+        dlookr::plot_outlier(tgt_by, all_of(nm_var))
+        
+        if (i == 1) {
+          break_line_asis(20)
+        } else {
+          break_line_asis(1)
+        }
+        
+        mat <- dlookr::relate(tgt_by, all_of(nm_var)) %>% 
+          select(-se_mean, -p10, -p20, -p30, -p40, -p60, -p70, -p80, -p90) %>% 
+          select(-variable) %>% 
+          t()
+        
+        colnames(mat) <- mat[1, ] %>%
+          ifelse(. %in% "total", "<Total>", .)
+        mat  <- mat[-1, ] 
+        
+        rownames(mat) <- c("N", "Missing", "Mean", "Standard Deviation", 
+                           "IQR", "Skewness", "Kurtosis", "Min", "1%", "5%", 
+                           "Q1", "Median", "Q3", "95%", "99%", "Max")
+        
+        header_above <- c(1, NCOL(mat))
+        names(header_above) <- c(" ", target)
+        
+        caption <- "Descriptive statistics with levels of target variable"
+        
+        mat %>% 
+          knitr::kable(format = "html", digits = 3, caption = caption) %>% 
+          kableExtra::add_header_above(header_above) %>% 
+          kableExtra::kable_styling(full_width = full_width, font_size = font_size, 
+                                    position = "left") %>%
+          gsub("font-size: initial !important;",
+               "font-size: 12px !important;", .) %>%          
+          cat() 
+        
+        break_page_asis()
       }
-      
-      mat <- dlookr::relate(tgt_by, all_of(nm_var)) %>% 
-        select(-se_mean, -p10, -p20, -p30, -p40, -p60, -p70, -p80, -p90) %>% 
-        select(-variable) %>% 
-        t()
-      
-      colnames(mat) <- mat[1, ] %>%
-        ifelse(. %in% "total", "<Total>", .)
-      mat  <- mat[-1, ] 
-      
-      rownames(mat) <- c("N", "Missing", "Mean", "Standard Deviation", 
-                         "IQR", "Skewness", "Kurtosis", "Min", "1%", "5%", 
-                         "Q1", "Median", "Q3", "95%", "99%", "Max")
-      
-      header_above <- c(1, NCOL(mat))
-      names(header_above) <- c(" ", target)
-      
-      mat %>% 
-        knitr::kable(format = "html", digits = 3) %>% 
-        kableExtra::add_header_above(header_above) %>% 
-        kableExtra::kable_styling(full_width = full_width, font_size = font_size, 
-                                  position = "left") %>%
-        cat() 
-      
-      break_page_asis()
-    }
-  }
+    }    
+  } 
 }
 
 
 
 #' @importFrom dlookr target_by relate find_class
-#' @importFrom htmltools h5 div
+#' @importFrom htmltools div
 #' @import dplyr
 #' @importFrom knitr kable
 #' @importFrom kableExtra kable_styling add_header_above
@@ -1831,70 +1833,76 @@ html_paged_target_numerical <- function(.data, target, full_width = TRUE,
 html_paged_target_categorical <- function(.data, target, full_width = TRUE, 
                                         font_size = 13) {
   if (is.null(target)) {
-    stop("The target variable is not defied.")    
-  }
-  
-  if (!target %in% names(.data)) {
-    stop("The data does not contain the variable specified for target.")    
-  }  
-  
-  nm_categorical <- .data %>% 
-    dlookr::find_class("categorical", index = FALSE) %>% 
-    setdiff(target)
-  
-  if (length(nm_categorical) < 1) {
-    htmltools::h5("There are no numeric variables except for the target variable.")
+    html_cat("The target variable is not defied.")    
+    break_page_asis()
+  } else if (!target %in% names(.data)) {
+    html_cat("The data does not contain the variable specified for target.")  
+    break_page_asis()
   } else {
-    suppressWarnings({
-      tab_main <- data.frame(Variable = nm_categorical, target_variable = target)
-    })
+    nm_categorical <- .data %>% 
+      dlookr::find_class("categorical", index = FALSE) %>% 
+      setdiff(target)
     
-    tgt_by <- .data %>% 
-      dlookr::target_by(target)
-    
-    for (i in seq(NROW(tab_main))) {
-      nm_var <- nm_categorical[i]
-      
-      el <- div(h3(nm_var))
-      cat(as.character(el))
-      
-      print(plot(dlookr::relate(tgt_by, all_of(nm_var))))
-      
-      if (i == 1 & length(levels(.data[, nm_var])) > 12) {
-        break_line_asis(20)
-      } else {
-        break_line_asis(1)
-      }
-      
-      mat <- relate(tgt_by, all_of(nm_var)) %>% 
-        addmargins() %>% 
-        as.data.frame() %>% 
-        tidyr::spread(all_of(target), Freq) 
-      
-      names(mat) <- names(mat) %>% 
-        ifelse(. %in% "Sum", "<Total>", .)
-      mat[, 1] <- mat[, 1] %>% 
-        as.character(.) %>% 
-        ifelse(. %in% "Sum", "<Total>", .)
-      
-      header_above <- c(1, NCOL(mat) - 1)
-      names(header_above) <- c(" ", target)
-      
-      mat %>% 
-        knitr::kable(format = "html", digits = 3) %>% 
-        kableExtra::add_header_above(header_above) %>% 
-        kableExtra::kable_styling(full_width = full_width, font_size = font_size, 
-                                  position = "left") %>%
-        cat() 
+    if (length(nm_categorical) < 1) {
+      html_cat("There are no numeric variables except for the target variable.")
       break_page_asis()
-    }
-  }
+    } else {
+      suppressWarnings({
+        tab_main <- data.frame(Variable = nm_categorical, target_variable = target)
+      })
+      
+      tgt_by <- .data %>% 
+        dlookr::target_by(target)
+      
+      for (i in seq(NROW(tab_main))) {
+        nm_var <- nm_categorical[i]
+        
+        el <- div(h3(nm_var))
+        cat(as.character(el))
+        
+        print(plot(dlookr::relate(tgt_by, all_of(nm_var))))
+        
+        if (i == 1 & length(levels(.data[, nm_var])) > 12) {
+          break_line_asis(20)
+        } else {
+          break_line_asis(1)
+        }
+        
+        mat <- relate(tgt_by, all_of(nm_var)) %>% 
+          addmargins() %>% 
+          as.data.frame() %>% 
+          tidyr::spread(all_of(target), Freq) 
+        
+        names(mat) <- names(mat) %>% 
+          ifelse(. %in% "Sum", "<Total>", .)
+        mat[, 1] <- mat[, 1] %>% 
+          as.character(.) %>% 
+          ifelse(. %in% "Sum", "<Total>", .)
+        
+        header_above <- c(1, NCOL(mat) - 1)
+        names(header_above) <- c(" ", target)
+        
+        caption <- "Contingency table with target variable"
+        
+        mat %>% 
+          knitr::kable(format = "html", digits = 3, caption = caption) %>% 
+          kableExtra::add_header_above(header_above) %>% 
+          kableExtra::kable_styling(full_width = full_width, font_size = font_size, 
+                                    position = "left") %>%
+          gsub("font-size: initial !important;",
+               "font-size: 12px !important;", .) %>%            
+          cat() 
+        
+        break_page_asis()
+      }
+    }    
+  } 
 }
 
 
 
 #' @importFrom dlookr plot_correlate correlate find_class
-#' @importFrom htmltools h3 h4 h5 div
+#' @importFrom htmltools h3 h4 div
 #' @importFrom knitr kable
 #' @importFrom kableExtra kable_styling add_header_above
 #' @import dplyr
@@ -1902,67 +1910,72 @@ html_paged_target_categorical <- function(.data, target, full_width = TRUE,
 html_paged_target_correlation <- function(.data, target, full_width = TRUE, 
                                           font_size = 13) {
   if (is.null(target)) {
-    stop("The target variable is not defied.")    
-  }
-  
-  if (!target %in% names(.data)) {
-    stop("The data does not contain the variable specified for target.")    
-  }  
-  
-  nm_numeric <- .data %>% 
-    dlookr::find_class("numerical", index = FALSE) %>% 
-    setdiff(target)
-  
-  if (length(nm_numeric) < 2) {
-    htmltools::h5("The number of numerical variables is less than 2.")
+    html_cat("The target variable is not defied.")    
+    break_page_asis()
+  } else if (!target %in% names(.data)) {
+    html_cat("The data does not contain the variable specified for target.")    
+    break_page_asis()
   } else {
-    target_levels <- .data[, target] %>% 
-      unique()
+    nm_numeric <- .data %>% 
+      dlookr::find_class("numerical", index = FALSE) %>% 
+      setdiff(target)
     
-    for (i in seq(target_levels)) {
-      value <- target_levels[i]
-      
-      el <- div(h3(paste(target, value, sep = " : ")))
-      cat(as.character(el))
-      
-      el <- div(h4("Correlation Coefficient Matrix"))
-      cat(as.character(el))
-      
-      target2 <- paste0("^", target, "$")
-      
-      data_filterd <- .data %>% 
-        filter_at(vars(matches(target2)), 
-                  any_vars(. %in% value))
-      
-      mat_corr <- data_filterd %>% 
-        dlookr::correlate() %>% 
-        tidyr::spread(var2, coef_corr)
-      
-      header_above <- c(1, NCOL(mat_corr) - 1)
-      names(header_above) <- c(" ", "second variable")
-      
-      names(mat_corr)[1] <- "first variable"
-      
-      mat_corr %>% 
-        knitr::kable(format = "html", digits = 3) %>% 
-        kableExtra::add_header_above(header_above) %>% 
-        kableExtra::kable_styling(full_width = full_width, font_size = font_size, 
-                                  position = "left") %>%
-        cat() 
-      
+    if (length(nm_numeric) < 2) {
+      html_cat("The number of numerical variables is less than 2.")
       break_page_asis()
+    } else {
+      target_levels <- .data[, target] %>% 
+        unique()
       
-      el <- div(h3(paste(target, value, sep = " : ")))
-      cat(as.character(el))
-      
-      el <- div(h4("Correlation Plot"))
-      cat(as.character(el))
-      
-      dlookr::plot_correlate(data_filterd)
-      
-      break_page_asis()
-    }
-  }
+      for (i in seq(target_levels)) {
+        value <- target_levels[i]
+        
+        el <- div(h3(paste(target, value, sep = " : ")))
+        cat(as.character(el))
+        
+        el <- div(h4("Correlation Coefficient Matrix"))
+        cat(as.character(el))
+        
+        target2 <- paste0("^", target, "$")
+        
+        data_filterd <- .data %>% 
+          filter_at(vars(matches(target2)), 
+                    any_vars(. %in% value))
+        
+        mat_corr <- data_filterd %>% 
+          dlookr::correlate() %>% 
+          tidyr::spread(var2, coef_corr)
+        
+        header_above <- c(1, NCOL(mat_corr) - 1)
+        names(header_above) <- c(" ", "second variable")
+        
+        names(mat_corr)[1] <- "first variable"
+        
+        caption <- "Matrix table of correlation coefficient"
+        
+        mat_corr %>% 
+          knitr::kable(format = "html", digits = 3, caption = caption) %>% 
+          kableExtra::add_header_above(header_above) %>% 
+          kableExtra::kable_styling(full_width = full_width, font_size = font_size, 
+                                    position = "left") %>%
+          gsub("font-size: initial !important;",
+               "font-size: 12px !important;", .) %>%             
+          cat() 
+        
+        break_page_asis()
+        
+        el <- div(h3(paste(target, value, sep = " : ")))
+        cat(as.character(el))
+        
+        el <- div(h4("Correlation Plot"))
+        cat(as.character(el))
+        
+        dlookr::plot_correlate(data_filterd)
+        
+        break_page_asis()
+      }
+    }    
+  } 
 }
 
 

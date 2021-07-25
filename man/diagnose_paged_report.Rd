@@ -100,8 +100,9 @@ You can choose to output to pdf and html files.
 This is useful for diagnosing a data frame with a large number of variables
 than data with a small number of variables.
 
-The title and subtitle colors should be designated by the color name used in 
-CSS of html, not the color defined in R.
+Create an  PDF through the Chrome DevTools Protocol. If you want to create PDF, 
+Google Chrome or Microsoft Edge (or Chromium on Linux) must be installed prior to using this function.
+If not installed, you must use output_format = "html".
 }
 \section{Reported information}{
 
@@ -111,6 +112,7 @@ Reported from the data diagnosis is as follows.
   \item Overview
   \itemize{
     \item Data Structures 
+    \item Job Informations
     \item Warnings
     \item Variables
   } 
@@ -146,21 +148,28 @@ Reported from the data diagnosis is as follows.
 
 \examples{
 \dontrun{
+# create dataset
+heartfailure2 <- dlookr::heartfailure
+heartfailure2[sample(seq(NROW(heartfailure2)), 20), "sodium"] <- NA
+heartfailure2[sample(seq(NROW(heartfailure2)), 5), "smoking"] <- NA
+heartfailure2[sample(seq(NROW(heartfailure2)), 2), "time"] <- 0
+heartfailure2[sample(seq(NROW(heartfailure2)), 1), "creatinine"] <- -0.3
+ 
 # create pdf file. file name is Diagnosis_Paged_Report.pdf
-diagnose_paged_report(heartfailure)
+# diagnose_paged_report(heartfailure2)
 
 # create pdf file. file name is Diagn.pdf. and change cover image
 # cover <- file.path(system.file(package = "dlookrExtra"), "report", "cover2.jpg")
-# diagnose_paged_report(heartfailure, cover_img = cover, title_color = "gray",
+# diagnose_paged_report(heartfailure2, cover_img = cover, title_color = "gray",
     output_file = "Diagn.pdf")
 
 # create pdf file. file name is ./Diagn.pdf and not browse
 # cover <- file.path(system.file(package = "dlookrExtra"), "report", "cover3.jpg")
-# diagnose_paged_report(heartfailure, output_dir = ".", cover_img = cover, 
+# diagnose_paged_report(heartfailure2, output_dir = ".", cover_img = cover, 
 #    flag_content_missing = FALSE, output_file = "Diagn.pdf", browse = FALSE)
 
 # create pdf file. file name is Diagnosis_Paged_Report.html
-# diagnose_paged_report(heartfailure, output_format = "html")
+# diagnose_paged_report(heartfailure2, output_format = "html")
 }
 
 }

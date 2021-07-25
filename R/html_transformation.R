@@ -291,7 +291,7 @@ html_impute_missing <- function(.data, target = NULL) {
         }  
       )
   } else {
-    h5("There are no variables in the dataset with missing values.")
+    html_cat("There are no variables in the dataset with missing values.")
   }
 }
 
@@ -435,7 +435,7 @@ html_impute_outlier <- function(.data) {
         }          
       )
   } else {
-    h5("There are no variables in the dataset with outliers.")
+    html_cat("There are no variables in the dataset with outliers.")
   }
 }
 
@@ -589,7 +589,7 @@ html_resolve_skewness <- function(.data) {
         }
       )
   } else {
-    h5("There are no variables including skewed.")
+    html_cat("There are no variables including skewed.")
   }
 }  
 
@@ -714,7 +714,7 @@ html_binning <- function(.data) {
         }
       )
   } else {
-    h5("There are no numerical variables.")
+    html_cat("There are no numerical variables.")
   }
 }  
 
@@ -730,16 +730,16 @@ html_optimal_binning <- function(.data, target) {
   numlist <- find_class(.data, "numerical", index = FALSE)
   
   if (is.null(target)) {
-    h5("The target variable is not defied.")    
+    html_cat("The target variable is not defied.")    
   } else if (!target %in% names(.data)) {
-    h5(paste0("The target variable ", target, " is not in the data."))
+    html_cat(paste0("The target variable ", target, " is not in the data."))
   } else if (length(numlist) == 0) {
-    h5("There are no numerical variables.")
+    html_cat("There are no numerical variables.")
   } else {
     n_levles <- length(table(pull(.data, target)))
     
     if (n_levles != 2) {
-      h5("The target variable is not a binary class.")
+      html_cat("The target variable is not a binary class.")
     } else {
       tab_numerical <- .data %>% 
         select_at(numlist) %>% 
@@ -875,13 +875,15 @@ html_paged_impute_missing <- function(.data, target = NULL, full_width = TRUE,
     
     nm_cols <- c("variables", "data types", "observations", "missing", "missing(%)")
     
-    caption <- "Information of Missing Values"
+    caption <- "Information of missing values"
     
     tab_missing %>% 
       knitr::kable(format = "html", digits = 2, caption = caption,
                    col.names = nm_cols) %>% 
       kableExtra::kable_styling(full_width = full_width, font_size = font_size, 
                                 position = "left") %>%
+      gsub("font-size: initial !important;",
+           "font-size: 12px !important;", .) %>%        
       cat() 
     
     break_page_asis()
@@ -958,6 +960,8 @@ html_paged_impute_missing <- function(.data, target = NULL, full_width = TRUE,
                          col.names = nm_cols) %>% 
             kableExtra::kable_styling(full_width = full_width, font_size = font_size, 
                                       position = "left") %>%
+            gsub("font-size: initial !important;",
+                 "font-size: 12px !important;", .) %>%              
             cat() 
           
           break_page_asis()
@@ -983,7 +987,7 @@ html_paged_impute_missing <- function(.data, target = NULL, full_width = TRUE,
           
           break_line_asis(1)
           
-          caption <- paste0("Contingency Table with ", method[j], " method")
+          caption <- paste0("Contingency table with ", method[j], " method")
           
           header_above <- c(1, NCOL(tab_compare))
           names(header_above) <- c("imputation method", target)
@@ -994,6 +998,8 @@ html_paged_impute_missing <- function(.data, target = NULL, full_width = TRUE,
             kableExtra::add_header_above(header_above) %>% 
             kableExtra::kable_styling(full_width = full_width, font_size = font_size, 
                                       position = "left") %>%
+            gsub("font-size: initial !important;",
+                 "font-size: 12px !important;", .) %>%              
             cat() 
           
           break_line_asis(1)
@@ -1005,6 +1011,8 @@ html_paged_impute_missing <- function(.data, target = NULL, full_width = TRUE,
             kableExtra::add_header_above(header_above) %>% 
             kableExtra::kable_styling(full_width = full_width, font_size = font_size, 
                                       position = "left") %>%
+            gsub("font-size: initial !important;",
+                 "font-size: 12px !important;", .) %>%              
             cat() 
           
           break_page_asis()
@@ -1012,7 +1020,8 @@ html_paged_impute_missing <- function(.data, target = NULL, full_width = TRUE,
       }  
     }  
   } else {
-    h5("There are no variables in the dataset with missing values.")
+    html_cat("There are no variables in the dataset with missing values.")
+    break_page_asis()
   }
 }
 
@@ -1039,13 +1048,15 @@ html_paged_impute_outlier <- function(.data, full_width = TRUE, font_size = 13) 
     
     nm_cols <- c("variables", "observations", "min", "max", "outlier", "outlier(%)")
     
-    caption <- "Information of Outliers"
+    caption <- "Information of outliers"
     
     tab_outlier %>% 
       knitr::kable(format = "html", digits = 2, caption = caption,
                    col.names = nm_cols) %>% 
       kableExtra::kable_styling(full_width = full_width, font_size = font_size, 
                                 position = "left") %>%
+      gsub("font-size: initial !important;",
+           "font-size: 12px !important;", .) %>%         
       cat() 
     
     break_page_asis()
@@ -1101,13 +1112,16 @@ html_paged_impute_outlier <- function(.data, full_width = TRUE, font_size = 13) 
                        col.names = nm_cols) %>% 
           kableExtra::kable_styling(full_width = full_width, font_size = font_size, 
                                     position = "left") %>%
+          gsub("font-size: initial !important;",
+               "font-size: 12px !important;", .) %>%            
           cat() 
         
         break_page_asis()
       }
     } 
   } else {
-    h5("There are no variables in the dataset with outliers.")
+    html_cat("There are no variables in the dataset with outliers.")
+    break_page_asis()
   }
 }
 
@@ -1129,13 +1143,15 @@ html_paged_resolve_skewness <- function(.data, full_width = TRUE, font_size = 13
     
     nm_cols <- c("variables", "min", "Q1", "median", "Q3", "max", "skewness")
     
-    caption <- "Information of Skewness"
+    caption <- "Information of skewness"
     
     tab_skewness %>% 
       knitr::kable(format = "html", digits = 2, caption = caption,
                    col.names = nm_cols) %>% 
       kableExtra::kable_styling(full_width = full_width, font_size = font_size, 
                                 position = "left") %>%
+      gsub("font-size: initial !important;",
+           "font-size: 12px !important;", .) %>%        
       cat() 
     
     break_page_asis()
@@ -1199,13 +1215,16 @@ html_paged_resolve_skewness <- function(.data, full_width = TRUE, font_size = 13
                        col.names = nm_cols) %>% 
           kableExtra::kable_styling(full_width = full_width, font_size = font_size, 
                                     position = "left") %>%
+          gsub("font-size: initial !important;",
+               "font-size: 12px !important;", .) %>%            
           cat() 
         
         break_page_asis()
       }
     }  
   } else {
-    h5("There are no variables including skewed.")
+    html_cat("There are no variables including skewed.")
+    break_page_asis()
   }
 }  
 
@@ -1250,7 +1269,7 @@ html_paged_binning <- function(.data, full_width = TRUE, font_size = 13) {
     nm_cols <- c("variables", "data types", "unique", "unique rate", 
                  "binning method", "bins")
     
-    caption <- "Information of Binnings"
+    caption <- "Information of binnings"
     
     print_tab(tab_numerical, n_rows = 30, add_row = 3, caption = caption, 
               full_width = TRUE, font_size = 13, col.names = nm_cols, 
@@ -1277,17 +1296,22 @@ html_paged_binning <- function(.data, full_width = TRUE, font_size = 13) {
       
       nm_cols <- c("bins", "frequency", "frequency(%)")
       
+      caption <- "Contingency table with bins"
+      
       summary(bins[[i]]) %>% 
         knitr::kable(format = "html", digits = 2, caption = caption,
                      col.names = nm_cols) %>% 
         kableExtra::kable_styling(full_width = full_width, font_size = font_size, 
                                   position = "left") %>%
+        gsub("font-size: initial !important;",
+             "font-size: 12px !important;", .) %>%          
         cat() 
       
       break_page_asis()      
     }  
   } else {
-    h5("There are no numerical variables.")
+    html_cat("There are no numerical variables.")
+    break_page_asis()
   }
 }  
 
@@ -1304,16 +1328,20 @@ html_paged_optimal_binning <- function(.data, target, full_width = TRUE,
   numlist <- find_class(.data, "numerical", index = FALSE)
   
   if (is.null(target)) {
-    h5("The target variable is not defied.")    
+    html_cat("The target variable is not defied.")    
+    break_page_asis()
   } else if (!target %in% names(.data)) {
-    h5(paste0("The target variable ", target, " is not in the data."))
+    html_cat(paste0("The target variable ", target, " is not in the data."))
+    break_page_asis()
   } else if (length(numlist) == 0) {
-    h5("There are no numerical variables.")
+    html_cat("There are no numerical variables.")
+    break_page_asis()
   } else {
     n_levles <- length(table(pull(.data, target)))
     
     if (n_levles != 2) {
-      h5("The target variable is not a binary class.")
+      html_cat("The target variable is not a binary class.")
+      break_page_asis()
     } else {
       tab_numerical <- .data %>% 
         select_at(numlist) %>% 
@@ -1338,7 +1366,7 @@ html_paged_optimal_binning <- function(.data, target, full_width = TRUE,
       nm_cols <- c("variables", "data types", "unique", "unique rate", 
                    "success", "bins")
       
-      caption <- "Information of Optimal Binnings"
+      caption <- "Information of optimal binnings"
       
       print_tab(tab_numerical, n_rows = 30, add_row = 3, caption = caption, 
                 full_width = TRUE, font_size = 13, col.names = nm_cols, 
@@ -1358,13 +1386,15 @@ html_paged_optimal_binning <- function(.data, target, full_width = TRUE,
         
         break_line_asis(1)
         
-        caption <- "Binning Table with Performance Metrics"
+        caption <- "Binning table with performance measures"
         
         attr(bins[[i]], "performance") %>% 
           select(-CntCumPos, -CntCumNeg, -RateCumPos, -RateCumNeg) %>%
           knitr::kable(format = "html", digits = 2, caption = caption) %>% 
           kableExtra::kable_styling(full_width = full_width, font_size = font_size, 
                                     position = "left") %>%
+          gsub("font-size: initial !important;",
+               "font-size: 12px !important;", .) %>%            
           cat() 
           
         break_page_asis()

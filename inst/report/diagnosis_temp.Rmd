@@ -119,6 +119,8 @@ if (sample_percent < 100) {
   idx <- sample(seq(N), size = N_sample)
   
   reportData <- reportData[idx, ]
+} else {
+  N_sample <- N
 }
 
 # solve the overview
@@ -568,7 +570,7 @@ h1("Unique Values", id = "ID-h1-uniq-value", class = "title-h1")
 ```
 
 ```{r unique-categorical, results='asis'}
-h2("Categorical Vaiables", id = "ID-h2-uniq-categorical", class = "title-h2")
+h2("Categorical Variables", id = "ID-h2-uniq-categorical", class = "title-h2")
 ```
 
 ```{r unique-date-category, comment="", results='asis'}
@@ -578,7 +580,7 @@ break_line_asis(1)
 ```
 
 ```{r unique-numerical, results='asis'}
-h2("Numarical Vaiables", id = "ID-h2-uniq-numerical", class = "title-h2")
+h2("Numerical Variables", id = "ID-h2-uniq-numerical", class = "title-h2")
 ```
 
 ```{r unique-data-numeric, comment="", results='asis'}

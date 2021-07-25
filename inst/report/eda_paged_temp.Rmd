@@ -106,7 +106,9 @@ knitr::kables(format = "html",
                  format.args = list(big.mark = ",")) %>% 
       kable_styling(full_width = FALSE, font_size = 15) 
     ),
-  caption = "Data Structures and Types") %>% 
+  caption = "Data structures and types") %>% 
+  gsub("font-size: initial !important;",
+       "font-size: 12px !important;", .) %>%  
   cat()
 ```
 
@@ -127,7 +129,7 @@ value <- c("$dataset$",
 
 info_job <- data.frame(division = division, metrics = metrics, value = value)
 
-cap <- "Job Informations"
+cap <- "Job informations"
 
 print_tab(info_job, caption = cap)
 ```
@@ -164,7 +166,7 @@ idx.numeric <- idx.numeric[apply(as.data.frame(reportData[, idx.numeric]), 2,
 ### Numerical Variables
 
 ```{r descriptive-numerical, results='asis'}
-cap <- "Descriptive Statistics of Numerical Variables"
+cap <- "Descriptive statistics of numerical variables"
 
 html_paged_describe(reportData, caption = cap, font_size = 13)
 ```
@@ -177,7 +179,7 @@ html_paged_describe_detail(reportData)
 ### Categorical Variables
 
 ```{r descriptive-categorical, results='asis'}
-cap <- "Top Rank levels of Categorical Variables"
+cap <- "Top rank levels of categorical variables"
 
 html_paged_categorical(reportData, caption = cap, font_size = 13)
 ```
@@ -189,7 +191,7 @@ html_paged_categorical_detail(reportData)
 
 ## Normality Test
 ```{r normality, results='asis'}
-cap <- "Descriptive Statistics of Numerical Variables"
+cap <- "Descriptive statistics of numerical variables"
 
 html_paged_normality(reportData, caption = cap, font_size = 13)
 ```
@@ -202,14 +204,14 @@ html_paged_normality_detail(reportData)
 # Bivariate Analysis
 ## Compare Numerical Variables
 ```{r compare-numerical, results='asis'}
-cap <- "Correlation Coefficient"
+cap <- "Correlation coefficient"
 
 html_paged_compare_numerical(reportData, caption = cap, font_size = 13)
 ```
 
 ## Compare Categorical Variables
 ```{r compare-categorical, results='asis', dpi=300, fig.height=5, fig.width=5, out.width="70%"}
-cap <- "Chisqure-Test"
+cap <- "Chisqure-test"
 
 html_paged_compare_categorical(reportData, caption = cap, font_size = 13)
 ```
@@ -226,13 +228,15 @@ html_paged_correlation(reportData)
 
 ```{r plot-correlation, results='asis', dpi=300, fig.height=5, fig.width=5, out.width="85%"}
 if (length(idx.numeric) < 2) {
-  htmltools::h5("The number of numerical variables is less than 2.")
+  html_cat("The number of numerical variables is less than 2.")
 } else {
   dlookr::plot_correlate(reportData)  
 }
 
 break_page_asis()
 ```
+
+$targeted_eda$
 
 # Target based Analysis
 ## Grouped Numerical Variables
@@ -253,3 +257,4 @@ html_paged_target_categorical(reportData, targetVariable)
 html_paged_target_correlation(reportData, targetVariable)  
 ```
 
+$targeted_eda$

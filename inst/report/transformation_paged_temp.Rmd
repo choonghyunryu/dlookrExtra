@@ -106,7 +106,9 @@ knitr::kables(format = "html",
                  format.args = list(big.mark = ",")) %>% 
       kable_styling(full_width = FALSE, font_size = 15) 
     ),
-  caption = "Data Structures and Types") %>% 
+  caption = "Data structures and types") %>% 
+  gsub("font-size: initial !important;",
+       "font-size: 12px !important;", .) %>%    
   cat()
 ```
 
@@ -127,7 +129,7 @@ value <- c("$dataset$",
 
 info_job <- data.frame(division = division, metrics = metrics, value = value)
 
-cap <- "Job Informations"
+cap <- "Job informations"
 
 print_tab(info_job, caption = cap)
 ```
@@ -157,9 +159,12 @@ html_paged_resolve_skewness(reportData)
 html_paged_binning(reportData)
 ```
 
+$targeted_eda$
+
 # Optimal Binning
 
 ```{r optimal-binning, results='asis', dpi=300, fig.height=5, fig.width=7, out.width="80%"}
 html_paged_optimal_binning(reportData, target = targetVariable)
 ```
 
+$targeted_eda$
