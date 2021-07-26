@@ -6,7 +6,7 @@
 \usage{
 diagnose_paged_report(
   .data,
-  output_format = c("pdf", "html"),
+  output_format = c("pdf", "html")[1],
   output_file = NULL,
   output_dir = tempdir(),
   browse = TRUE,
@@ -161,12 +161,12 @@ heartfailure2[sample(seq(NROW(heartfailure2)), 1), "creatinine"] <- -0.3
 # create pdf file. file name is Diagn.pdf. and change cover image
 # cover <- file.path(system.file(package = "dlookrExtra"), "report", "cover2.jpg")
 # diagnose_paged_report(heartfailure2, cover_img = cover, title_color = "gray",
-    output_file = "Diagn.pdf")
+#  output_file = "Diagn.pdf")
 
 # create pdf file. file name is ./Diagn.pdf and not browse
 # cover <- file.path(system.file(package = "dlookrExtra"), "report", "cover3.jpg")
 # diagnose_paged_report(heartfailure2, output_dir = ".", cover_img = cover, 
-#    flag_content_missing = FALSE, output_file = "Diagn.pdf", browse = FALSE)
+#   flag_content_missing = FALSE, output_file = "Diagn.pdf", browse = FALSE)
 
 # create pdf file. file name is Diagnosis_Paged_Report.html
 # diagnose_paged_report(heartfailure2, output_format = "html")

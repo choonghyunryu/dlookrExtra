@@ -7,7 +7,7 @@
 transformation_paged_report(
   .data,
   target = NULL,
-  output_format = c("pdf", "html"),
+  output_format = c("pdf", "html")[1],
   output_file = NULL,
   output_dir = tempdir(),
   browse = TRUE,
@@ -110,17 +110,17 @@ TThe transformation process will report the following information:
 \examples{
 \dontrun{
 # create pdf file. file name is Transformation_Paged_Report.pdf
-transformation_paged_report(heartfailure, sample_percent = 80)
+# transformation_paged_report(heartfailure, sample_percent = 80)
 
 # create pdf file. file name is Transformation_heartfailure. and change cover image
 # cover <- file.path(system.file(package = "dlookrExtra"), "report", "cover2.jpg")
 # transformation_paged_report(heartfailure, cover_img = cover, title_color = "gray",
-    output_file = "Transformation_heartfailure")
+#   output_file = "Transformation_heartfailure")
 
 # create pdf file. file name is ./Transformation.pdf and not browse
 # cover <- file.path(system.file(package = "dlookrExtra"), "report", "cover1.jpg")
 # transformation_paged_report(heartfailure, output_dir = ".", cover_img = cover, 
-#    flag_content_missing = FALSE, output_file = "Transformation.pdf", browse = FALSE)
+#   flag_content_missing = FALSE, output_file = "Transformation.pdf", browse = FALSE)
 
 # create pdf file. file name is Transformation_Paged_Report.html
 # transformation_paged_report(heartfailure, target = "death_event", output_format = "html")

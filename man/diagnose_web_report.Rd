@@ -123,11 +123,11 @@ heartfailure2[sample(seq(NROW(heartfailure2)), 1), "creatinine"] <- -0.3
 # file name is Diagn.html. and change logo image
 # logo <- file.path(system.file(package = "dlookrExtra"), "report", "R_logo_html.svg")
 # diagnose_web_report(heartfailure2, logo_img = logo, title_color = "black",
-#    output_file = "Diagn.html")
+#   output_file = "Diagn.html")
 
 # file name is ./Diagn_heartfailure.html, "blue" theme and not browse
 # diagnose_web_report(heartfailure2, output_dir = ".", author = "Choonghyun Ryu",
-#    output_file = "Diagn_heartfailure.html", theme = "blue", browse = FALSE)
+#   output_file = "Diagn_heartfailure.html", theme = "blue", browse = FALSE)
 }
 
 }

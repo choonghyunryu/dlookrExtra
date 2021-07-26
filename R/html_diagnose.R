@@ -910,6 +910,3 @@ html_paged_unique_num <- function(tab, thres, n_rows = 25, add_row = 3,
   }
 }
 
-
-
-  

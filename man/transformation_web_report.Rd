@@ -88,12 +88,12 @@ The transformation process will report the following information:
 \examples{
 \dontrun{
 # create html file. file name is Transformation_Report.html
-transformation_web_report(heartfailure)
+# transformation_web_report(heartfailure)
 
 # file name is Transformation.html. and change logo image
 # logo <- file.path(system.file(package = "dlookrExtra"), "report", "R_logo_html.svg")
 # transformation_web_report(heartfailure, logo_img = logo, title_color = "black",
-#     output_file = "Transformation.html")
+#   output_file = "Transformation.html")
 
 # file name is ./Transformation.html, "blue" theme and not browse
 # transformation_web_report(heartfailure, output_dir = ".", target = "death_event", 

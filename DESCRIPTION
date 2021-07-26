@@ -16,6 +16,7 @@ Imports:
     rmarkdown,
     pagedown (>= 0.15),
     htmltools,
+    reactable,
     knitr
 Author: Choonghyun Ryu [aut, cre]
 Maintainer: Choonghyun Ryu <choonghyun.ryu@gmail.com>    

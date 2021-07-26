@@ -7,7 +7,7 @@
 eda_paged_report(
   .data,
   target = NULL,
-  output_format = c("pdf", "html"),
+  output_format = c("pdf", "html")[1],
   output_file = NULL,
   output_dir = tempdir(),
   browse = TRUE,
@@ -140,12 +140,12 @@ heartfailure2[sample(seq(NROW(heartfailure2)), 5), "smoking"] <- NA
 # create pdf file. file name is EDA.pdf. and change cover image
 # cover <- file.path(system.file(package = "dlookrExtra"), "report", "cover1.jpg")
 # eda_paged_report(heartfailure2, cover_img = cover, title_color = "gray",
-    output_file = "EDA.pdf")
+#   output_file = "EDA.pdf")
 
 # create pdf file. file name is ./EDA.pdf and not browse
 # cover <- file.path(system.file(package = "dlookrExtra"), "report", "cover3.jpg")
 # eda_paged_report(heartfailure2, output_dir = ".", cover_img = cover, 
-#    flag_content_missing = FALSE, output_file = "EDA.pdf", browse = FALSE)
+#   flag_content_missing = FALSE, output_file = "EDA.pdf", browse = FALSE)
 
 # create pdf file. file name is EDA_Paged_Report.html
 # eda_paged_report(heartfailure2, target = "death_event", output_format = "html")
