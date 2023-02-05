@@ -1,8 +1,6 @@
-#' @name dlookrExtra_templ_html
-#' @rdname dlookrExtra_templ_html
-#' @title dlookrExtra HTML template
+#' dlookrExtra HTML template
 #'
-#' Loads additional style and template file
+#' @describeIn Loads additional style and template file
 #'
 #' @references https://raw.githubusercontent.com/dr-harper/example-rmd-templates/master/R/my_html_format.R
 #'

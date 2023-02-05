@@ -2,9 +2,7 @@
 % Please edit documentation in R/dlookrExtra_templ_html.R
 \name{dlookrExtra_templ_html}
 \alias{dlookrExtra_templ_html}
-\title{dlookrExtra HTML template
-
-Loads additional style and template file}
+\title{dlookrExtra HTML template}
 \usage{
 dlookrExtra_templ_html(toc = TRUE, ...)
 }
@@ -18,9 +16,12 @@ An R Markdown output format.
 }
 \description{
 dlookrExtra HTML template
-
-Loads additional style and template file
 }
+\section{Functions}{
+\itemize{
+\item \code{dlookrExtra_templ_html()}: additional style and template file
+
+}}
 \references{
 https://raw.githubusercontent.com/dr-harper/example-rmd-templates/master/R/my_html_format.R
 }

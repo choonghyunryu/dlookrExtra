@@ -1,7 +1,8 @@
 Package: dlookrExtra
 Type: Package
 Title: Easy EDA with dlookr package
-Version: 0.1.0
+Version: 0.1.1
+Date: 2023-02-05
 Authors@R: c(
   person("Choonghyun", "Ryu",, "choonghyun.ryu@gmail.com", role = c("aut", "cre"))
   )
@@ -10,16 +11,29 @@ License: GPL-2 | file LICENSE
 Encoding: UTF-8
 LazyData: true
 Depends:
-    R (>= 3.2.0)
-Imports: 
     dlookr,
-    rmarkdown,
-    pagedown (>= 0.15),
+    dplyr,  
+    ggplot2,
+    openxlsx
+Imports: 
+    Cairo,
+    cli,
+    furrr,
+    future,
+    here,
     htmltools,
+    janitor,
+    knitr, 
+    pagedown (>= 0.15),    
+    progress,
+    purrr,
     reactable,
-    knitr
+    rlang,
+    rmarkdown,    
+    showtext,
+    sysfonts
 Author: Choonghyun Ryu [aut, cre]
 Maintainer: Choonghyun Ryu <choonghyun.ryu@gmail.com>    
 BugReports: https://github.com/choonghyunryu/dlookrExtra/issues
 VignetteBuilder: knitr    
-RoxygenNote: 7.1.1
+RoxygenNote: 7.2.2
